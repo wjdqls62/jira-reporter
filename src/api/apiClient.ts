@@ -1,13 +1,19 @@
 import axios, { type AxiosRequestConfig } from 'axios';
 
+export const baseUrl = '/rest';
+
 const instance = axios.create({
-	baseURL: 'https://jsdev.atlassian.net/rest/api/3/',
+	baseURL: baseUrl,
 });
 
 instance.interceptors.request.use(
 	(config) => {
-		const authToken = 'TEST_TOKEN';
-		config.headers.Authorization = `Bearer ${authToken}`;
+		config.auth = config.auth || {
+			username: '',
+			password: '',
+		};
+		config.auth.username = localStorage.getItem('email') || '';
+		config.auth.password = localStorage.getItem('jiraToken') || '';
 		return config;
 	},
 	(error) => {
@@ -24,6 +30,7 @@ export const requestApi = async <T>(
 	const axiosConfig: AxiosRequestConfig = {
 		method,
 		url,
+		data,
 		...config,
 	};
 
