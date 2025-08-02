@@ -6,4 +6,11 @@
   height: 100%;
   justify-content: center;
   align-items: center;
+
+  .inputContainer {
+    display: flex;
+    width: 300px;
+    flex-direction: column;
+    gap: 10px;
+  }
 }
