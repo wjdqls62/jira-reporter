@@ -37,9 +37,9 @@ export default function ReportPage() {
 
 	if (jira.token && issue.type && issue.key) {
 		return (
-			<Flex>
+			<div>
 				<ReportContents issueType={issue.type} issueKey={issue.key} />
-			</Flex>
+			</div>
 		);
 	}
 }
