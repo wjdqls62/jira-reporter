@@ -12,5 +12,29 @@
     width: 300px;
     flex-direction: column;
     gap: 10px;
+
+    .labelWithField {
+      display: flex;
+      flex-direction: column;
+
+      .labelText {
+        font-size: 12px;
+      }
+    }
+
+    textarea {
+      width: 295px;
+      height: 100px;
+    }
+
+
+  }
+}
+
+.reportContentsLayout {
+  table {
+    border-collapse: collapse;
+    border-color: gray;
+    font-size: 0.9em;
   }
 }
