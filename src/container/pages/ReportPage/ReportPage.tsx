@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Flex, Text } from '@radix-ui/themes';
 
 import AccessTokenInput from './AccessTokenInput.tsx';
 import ReportContents from './ReportContents.tsx';
