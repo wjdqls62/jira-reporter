@@ -34,6 +34,9 @@ export default function useJiraIssue({ issueType, issueKey }: Props) {
 					reporter: issue.fields.reporter.displayName,
 					priority: issue.fields.priority.name,
 					issueType: issue.fields.issuetype.name,
+					resolutions: issue.fields.resolutions,
+					causeOfDetect:
+						issue.fields.customfield_10042?.map((item) => item?.value) || [],
 				} as ISubIssue;
 			});
 			return subIssues;

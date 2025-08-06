@@ -14,4 +14,6 @@ export interface ISubIssue {
 	reporter: string;
 	priority: string; //customfield_10044
 	issueType: string;
+	resolutions: string;
+	causeOfDetect: string[];
 }
