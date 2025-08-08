@@ -3,7 +3,7 @@ export const SWR_KEYS = {
 	inquiryIssue: (issueKey: string) => `/3/issue/${issueKey}`,
 	inquiryMultipleIssue: (issueKeys: string[]) => {
 		const splitIssueKeys = issueKeys.join(',');
-		return `/3/search/?jql=issueKey%20in%20(${splitIssueKeys})`;
+		return `/api/3/search?jql=issueKey%20in%20(${splitIssueKeys})`;
 	},
 	inquiryEpicIssue: (epicKey: string, startAt: number = 0) =>
 		`/agile/1.0/epic/${epicKey}/issue?startAt=${startAt}&maxResults=150`,

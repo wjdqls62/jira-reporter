@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
 
 import AccessTokenInput from './AccessTokenInput.tsx';
-import ReportContents from './ReportContents.tsx';
+import Loading from '../../components/UiTools/Loading.tsx';
 
 export default function ReportPage() {
+	const navigate = useNavigate();
 	const [jira, setJira] = useState<{ token: string }>({
 		token: localStorage.getItem('jiraToken') || '',
 	});
@@ -23,23 +25,38 @@ export default function ReportPage() {
 			type: issueType,
 			key: issueKey,
 		});
+		navigate(issueType === 'epic' ? '/report/epic' : '/report/issues', {
+			state: {
+				issueType: issueType,
+				issueKey: issueKey,
+			},
+		});
 	};
 
 	if (!jira.token || !issue.type || !issue.key) {
 		return (
 			<AccessTokenInput
-				onSubmitToken={(token, issueKey, issueType) =>
-					handleSubmitToken(token, issueKey, issueType)
-				}
+				onSubmitToken={(token, issueKey, issueType) => {
+					if (issueType === 'epic') {
+						handleSubmitToken(token, issueKey, issueType);
+					} else if (issueType === 'issues') {
+						const issueKeys = issueKey.split(',');
+						handleSubmitToken(
+							token,
+							issueKeys.map((key) => key.trim()),
+							issueType,
+						);
+					}
+				}}
 			/>
 		);
 	}
 
-	if (jira.token && issue.type && issue.key) {
-		return (
-			<div>
-				<ReportContents issueType={issue.type} issueKey={issue.key} />
-			</div>
-		);
-	}
+	return (
+		<div>
+			<Suspense fallback={<Loading />}>
+				<Outlet />
+			</Suspense>
+		</div>
+	);
 }

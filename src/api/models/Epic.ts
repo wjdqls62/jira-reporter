@@ -12,7 +12,8 @@ export interface ISubIssue {
 	status: string;
 	components: string[];
 	reporter: string;
-	priority: string; //customfield_10044
+	defectPriority: string; //customfield_10044
+	priority: string;
 	issueType: string;
 	resolutions: string;
 	causeOfDetect: string[];

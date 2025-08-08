@@ -1,7 +1,9 @@
 .layoutContainer {
   display: flex;
   height: 100vh;
-  width: calc(1440px)
+  margin: 0 auto;
+  justify-content: center;
+  width: 100%;
 }
 
 .sideBar {
@@ -19,4 +21,6 @@
   flex: 1;
   overflow-y: auto;
   padding: 20px;
+  max-width: 2560px;
+  width: 100%;
 }

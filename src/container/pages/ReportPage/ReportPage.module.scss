@@ -26,15 +26,27 @@
       width: 295px;
       height: 100px;
     }
-
-
   }
 }
 
 .reportContentsLayout {
   table {
+    width: 1200px;
     border-collapse: collapse;
     border-color: gray;
     font-size: 0.9em;
+
+    .issueKey {
+      min-width: 90px;
+    }
+    .issueTitle {
+      max-width: 600px;
+    }
+    .clickable {
+      cursor: pointer;
+    }
+    .causeOfDetect {
+      max-width: 150px;
+    }
   }
 }

@@ -1,7 +1,9 @@
+import useSWR from 'swr';
 import useSWRMutation from 'swr/mutation';
 
 import { requestApi } from '../../api/apiClient.ts';
 import { SWR_KEYS } from '../../api/swrKeys.ts';
+import { defectPriority } from '../../constants/Issue.ts';
 
 import type { ISubIssue } from '../../api/models/Epic.ts';
 
@@ -11,20 +13,33 @@ interface Props {
 }
 
 export default function useJiraIssue({ issueType, issueKey }: Props) {
-	const { trigger: epicTrigger, data: epicData } = useSWRMutation(
-		SWR_KEYS.inquiryEpicIssue(issueKey as string),
-		async (url) => {
+	const {
+		data: epicData,
+		isLoading,
+		error,
+		mutate,
+	} = useSWR<any, Error>(
+		issueType === 'epic'
+			? SWR_KEYS.inquiryEpicIssue(issueKey as string)
+			: SWR_KEYS.inquiryMultipleIssue(issueKey as string[]),
+		async (url: string) => {
+			console.log(
+				`요청 시작, url: ${url}, issueType: ${issueType}, issueKey: ${issueKey}`,
+			);
 			const res = await requestApi('GET', url, {}, {});
+			const excludeIssue = ['테스트 오류', '이슈아님'];
 
 			const subIssues = res.issues.map((issue) => {
 				return {
 					id: issue.id,
 					key: issue.key,
-					parent: {
-						key: issue.fields.parent.key,
-						summary: issue.fields.parent.fields.summary,
-						status: issue.fields.parent.fields.status.name,
-					},
+					parent: issue.fields.parent
+						? {
+								key: issue.fields.parent.key,
+								summary: issue.fields.parent.fields.summary,
+								status: issue.fields.parent.fields.status.name,
+							}
+						: null,
 					summary: issue.fields.summary,
 					versions: issue.fields.versions,
 					fixVersions: issue.fields.fixVersions,
@@ -32,16 +47,60 @@ export default function useJiraIssue({ issueType, issueKey }: Props) {
 					status: issue.fields.status.name,
 					components: issue.fields.components,
 					reporter: issue.fields.reporter.displayName,
+					defectPriority: issue.fields.customfield_10044?.value || '',
 					priority: issue.fields.priority.name,
 					issueType: issue.fields.issuetype.name,
-					resolutions: issue.fields.resolutions,
+					resolutions: issue.fields?.resolutions || '',
 					causeOfDetect:
-						issue.fields.customfield_10042?.map((item) => item?.value) || [],
+						issue.fields?.customfield_10042?.map((item) => item?.value) || [],
 				} as ISubIssue;
 			});
-			return subIssues;
+
+			const improveIssues = subIssues.filter(
+				(issue) => issue.issueType === '개선' || issue.issueType === '새 기능',
+			);
+			const defectsIssues = subIssues
+				.filter((issue) => issue.issueType === '결함')
+				.filter((issue) =>
+					issue.causeOfDetect.every((item) => !excludeIssue.includes(item)),
+				);
+			const excludeIssues = subIssues
+				.filter((issue) => issue.issueType === '결함')
+				.filter((issue) =>
+					issue.causeOfDetect.some((item) => excludeIssue.includes(item)),
+				);
+
+			// 정렬
+			//TODO 정렬 코드 개선 필요
+			const sortedDefectsIssues = defectPriority.flatMap((issue) => {
+				const filteredIssue = defectsIssues.filter(
+					(ds) => ds.defectPriority === issue,
+				);
+				const completedIssues = filteredIssue.filter(
+					(ds) => ds.status === '해결함' || ds.status === '닫힘',
+				);
+				const inProgressIssues = filteredIssue.filter(
+					(ds) =>
+						ds.status === '진행' ||
+						ds.status === '' ||
+						ds.status === '열림' ||
+						ds.status === '보류 중' ||
+						ds.status === '피드백',
+				);
+
+				return [...inProgressIssues, ...completedIssues];
+			});
+			return {
+				improvements: improveIssues,
+				defects: sortedDefectsIssues,
+				excludeDefects: excludeIssues,
+			};
+		},
+		{
+			suspense: true,
+			revalidateOnFocus: false,
 		},
 	);
 
-	return { epicTrigger, epicData };
+	return { epicData, isLoading };
 }

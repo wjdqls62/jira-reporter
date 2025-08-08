@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import styles from './ReportPage.module.scss';
+import { defectPriority, defectServerities } from '../../../constants/Issue.ts';
 import { Flex, Section } from '../../components/UiTools/UiTools.tsx';
 import useJiraIssue from '../../hooks/useJiraIssue.ts';
 
@@ -11,11 +13,13 @@ interface Props {
 	issueKey: string | string[] | null;
 }
 
-export default function ReportContents({ issueType, issueKey }: Props) {
-	const { epicData, epicTrigger } = useJiraIssue({
-		issueType,
-		issueKey: issueKey,
+export default function ReportContents() {
+	const { state } = useLocation();
+	const { epicData } = useJiraIssue({
+		issueKey: state.issueKey as string | string[],
+		issueType: state.issueType as 'epic' | 'issues',
 	});
+
 	const [data, setData] = useState<{
 		defects: ISubIssue[];
 		improvements: ISubIssue[];
@@ -26,9 +30,52 @@ export default function ReportContents({ issueType, issueKey }: Props) {
 		excludeDefects: [],
 	});
 
+	const serverityCount = useMemo(() => {
+		return defectServerities.reduce(
+			(acc, type) => {
+				acc[type] = data.defects.filter((issue) =>
+					issue.causeOfDetect.includes(type),
+				).length;
+				return acc;
+			},
+			{} as Record<string, number>,
+		);
+	}, [data.defects]);
+
+	const handleDeleteIssue = (issue: ISubIssue) => {
+		setData((prev) => {
+			const issueType = issue.issueType === '결함' ? 'defects' : 'improvements';
+			return {
+				...prev,
+				[issueType]: prev[issueType].filter(
+					(prevIssue) => prevIssue.id !== issue.id,
+				),
+			};
+		});
+	};
+
 	const memoizedReportDetails = useMemo(() => {
 		const versions = new Set(
 			data.defects.flatMap((issue) => issue.versions.map((ver) => ver.name)),
+		);
+
+		const fixedIssueCount = {
+			defects: data.defects.filter(
+				(issue) => issue.status === '닫힘' || issue.status === '해결함',
+			).length,
+			improvements: data.improvements.filter(
+				(issue) => issue.status === '닫힘' || issue.status === '해결함',
+			).length,
+		};
+
+		const priorityCount = defectPriority.reduce(
+			(acc, type) => {
+				acc[type] = data.defects.filter(
+					(issue) => issue.defectPriority === type,
+				).length;
+				return acc;
+			},
+			{} as Record<string, number>,
 		);
 
 		return (
@@ -55,22 +102,55 @@ export default function ReportContents({ issueType, issueKey }: Props) {
 								<tr>
 									<td rowSpan={4}>QC 이슈</td>
 									<td>신규 등록 이슈</td>
-									<td>57건</td>
-									<td>결함: 46건 개선, 새기능: 11건</td>
+									<td>{`${data.defects.length + data.improvements.length}건`}</td>
+									<td>
+										<div>{`결함: ${data.defects.length}건`}</div>
+										<div>{`개선, 새기능: ${data.improvements.length}건`}</div>
+									</td>
 								</tr>
 								<tr>
 									<td>결함 조치율</td>
-									<td>17/46=37%</td>
+									<td>
+										{`${fixedIssueCount.defects} / ${data.defects.length} = ${
+											isNaN(
+												(fixedIssueCount.defects / data.defects.length) * 100,
+											)
+												? 0
+												: (
+														(fixedIssueCount.defects / data.defects.length) *
+														100
+													).toFixed(2)
+										}%`}
+									</td>
 									<td>닫힘, 해결 결함/신규 결함</td>
 								</tr>
 								<tr>
 									<td>개선,새기능 조치율</td>
-									<td>1/11</td>
+									<td>{`${fixedIssueCount.improvements} / ${data.improvements.length} = ${
+										isNaN(
+											Number(
+												(
+													(fixedIssueCount.improvements /
+														data.improvements.length) *
+													100
+												).toFixed(2),
+											),
+										)
+											? 0
+											: (fixedIssueCount.improvements /
+													data.improvements.length) *
+												100
+									}%`}</td>
 									<td>닫힘, 해결(개선,새기능)/ 신규(개선,새기능)</td>
 								</tr>
 								<tr>
 									<td>결함 심각도별 분포(유효한 결함 분석)</td>
-									<td>장애: 1건 중요함: 7건 보통: 37건 사소함: 1건</td>
+									<td>
+										{defectPriority.map((type, index) => (
+											<div
+												key={`priority-${index}`}>{`${type}: ${priorityCount[type]}건`}</div>
+										))}
+									</td>
 									<td />
 								</tr>
 							</tbody>
@@ -86,17 +166,47 @@ export default function ReportContents({ issueType, issueKey }: Props) {
 								.map((issue, index) => {
 									return (
 										<tr key={index}>
-											<td>{index + 1}</td>
-											<td>{issue.key}</td>
-											<td>{issue.summary}</td>
-											<td>{issue.priority}</td>
-											<td>{issue.status}</td>
-											<td>
+											<td align={'center'}>{index + 1}</td>
+											<td className={styles.issueTitle}>{issue.summary}</td>
+											<td className={styles.issueKey} align={'center'}>
+												{issue.key}
+											</td>
+											<td align={'center'}>{issue.defectPriority}</td>
+											<td align={'center'}>{issue.status}</td>
+											<td className={styles.causeOfDetect}>
 												{issue.causeOfDetect.map((issue) => issue).join(', ')}
+											</td>
+											<td align={'center'}>
+												<span
+													className={styles.clickable}
+													onClick={() => handleDeleteIssue(issue)}>
+													❌
+												</span>
 											</td>
 										</tr>
 									);
 								})}
+						</tbody>
+					</table>
+				</Section>
+				<Section title={'2-1. 집계 제외 이슈 (이슈 아님)'}>
+					<table border={1}>
+						<IssueTableHeader type={'excludeDefects'} />
+						<tbody>
+							{data.excludeDefects.map((issue, index) => {
+								return (
+									<tr key={`$exclude-${index}`}>
+										<td align={'center'}>{index + 1}</td>
+										<td>{issue.summary}</td>
+										<td className={styles.issueKey} align={'center'}>
+											{issue.key}
+										</td>
+										<td align={'center'}>{issue.priority}</td>
+										<td align={'center'}>{issue.status}</td>
+										<td align={'center'}>{issue.causeOfDetect.join(', ')}</td>
+									</tr>
+								);
+							})}
 						</tbody>
 					</table>
 				</Section>
@@ -105,15 +215,25 @@ export default function ReportContents({ issueType, issueKey }: Props) {
 						<IssueTableHeader type={'improvements'} />
 						<tbody>
 							{data.improvements
-								.filter((issue) => issue.issueType === '개선')
+								.filter(
+									(issue) =>
+										issue.issueType === '개선' || issue.issueType === '새 기능',
+								)
 								.map((issue, index) => {
 									return (
 										<tr key={index}>
-											<td>{index + 1}</td>
-											<td>{issue.key}</td>
+											<td align={'center'}>{index + 1}</td>
 											<td>{issue.summary}</td>
-											<td>{issue.priority}</td>
-											<td>{issue.status}</td>
+											<td align={'center'}>{issue.key}</td>
+											<td align={'center'}>{issue.priority}</td>
+											<td align={'center'}>{issue.status}</td>
+											<td align={'center'}>
+												<span
+													className={styles.clickable}
+													onClick={() => handleDeleteIssue(issue)}>
+													❌
+												</span>
+											</td>
 										</tr>
 									);
 								})}
@@ -125,51 +245,34 @@ export default function ReportContents({ issueType, issueKey }: Props) {
 	}, [data]);
 
 	useEffect(() => {
-		const fetchData = async () => {
-			await epicTrigger().then((res) => {
-				const improveIssues = res.filter((issue) => issue.issueType === '개선');
-				const defectsIssues = res
-					.filter((issue) => issue.issueType === '결함')
-					.filter((issue) =>
-						issue.causeOfDetect.every((item) => !excludeIssue.includes(item)),
-					);
-				const excludeIssues = res
-					.filter((issue) => issue.issueType === '결함')
-					.filter((issue) =>
-						issue.causeOfDetect.some((item) => excludeIssue.includes(item)),
-					);
-				setData({
-					improvements: improveIssues,
-					defects: defectsIssues,
-					excludeDefects: excludeIssues,
-				});
+		if (epicData) {
+			setData({
+				defects: epicData.defects,
+				improvements: epicData.improvements,
+				excludeDefects: epicData.excludeDefects,
 			});
-		};
-		fetchData();
-	}, []);
+		}
+	}, [epicData]);
 
-	if (data) {
-		return (
-			<div className={styles.reportContentsLayout}>{memoizedReportDetails}</div>
-		);
-	}
+	return (
+		<div className={styles.reportContentsLayout}>{memoizedReportDetails}</div>
+	);
 }
-
-const excludeIssue = ['테스트 오류', '이슈아님'];
 
 const IssueTableHeader = ({
 	type = 'defect',
 }: {
-	type?: 'defect' | 'improvements';
+	type?: 'defect' | 'improvements' | 'excludeDefects';
 }) => {
 	return (
 		<thead>
 			<th>번호</th>
-			<th>키</th>
 			<th>설명</th>
+			<th>키</th>
 			<th>심각도</th>
 			<th>처리 상태</th>
-			{type === 'defect' && <th>결함 원인</th>}
+			{type !== 'improvements' && <th>결함 원인</th>}
+			{type !== 'excludeDefects' && <th>삭제</th>}
 		</thead>
 	);
 };
