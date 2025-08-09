@@ -16,7 +16,7 @@ export default function useJiraIssue({ issueType, issueKey }: Props) {
 	const {
 		data: epicData,
 		isLoading,
-		error,
+		isValidating,
 		mutate,
 	} = useSWR<any, Error>(
 		issueType === 'epic'
@@ -102,5 +102,5 @@ export default function useJiraIssue({ issueType, issueKey }: Props) {
 		},
 	);
 
-	return { epicData, isLoading };
+	return { epicData, isLoading, mutate, isValidating };
 }
