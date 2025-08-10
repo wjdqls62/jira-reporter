@@ -1,8 +1,21 @@
-import { Suspense, useState } from 'react';
+import { createContext, Suspense, useContext, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 
 import AccessTokenInput from './AccessTokenInput.tsx';
 import Loading from '../../components/UiTools/Loading.tsx';
+
+interface ReportState {
+	resetIssue: () => void;
+}
+
+const ReportPageContext = createContext<ReportState>({
+	resetIssue: () => {},
+});
+
+export const useReportPage = () => {
+	const context = useContext(ReportPageContext);
+	return context;
+};
 
 export default function ReportPage() {
 	const navigate = useNavigate();
@@ -16,6 +29,13 @@ export default function ReportPage() {
 		type: null,
 		key: null,
 	});
+
+	const resetIssue = () => {
+		setIssue({
+			type: null,
+			key: null,
+		});
+	};
 
 	const handleSubmitToken = (token, issueKey, issueType) => {
 		setJira({
@@ -54,9 +74,11 @@ export default function ReportPage() {
 
 	return (
 		<div>
-			<Suspense fallback={<Loading />}>
-				<Outlet />
-			</Suspense>
+			<ReportPageContext.Provider value={{ resetIssue }}>
+				<Suspense fallback={<Loading />}>
+					<Outlet />
+				</Suspense>
+			</ReportPageContext.Provider>
 		</div>
 	);
 }

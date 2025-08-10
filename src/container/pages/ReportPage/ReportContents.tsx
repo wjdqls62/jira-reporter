@@ -1,21 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
+import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import styles from './ReportPage.module.scss';
+import { useReportPage } from './ReportPage.tsx';
 import { defectPriority, defectServerities } from '../../../constants/Issue.ts';
+import Loading from '../../components/UiTools/Loading.tsx';
 import { Flex, Section } from '../../components/UiTools/UiTools.tsx';
 import useJiraIssue from '../../hooks/useJiraIssue.ts';
 
 import type { ISubIssue } from '../../../api/models/Epic.ts';
 
-interface Props {
-	issueType: 'epic' | 'issues' | null;
-	issueKey: string | string[] | null;
-}
-
 export default function ReportContents() {
+	const navigate = useNavigate();
 	const { state } = useLocation();
-	const { epicData } = useJiraIssue({
+	const { epicData, mutate, isValidating, isLoading } = useJiraIssue({
 		issueKey: state.issueKey as string | string[],
 		issueType: state.issueType as 'epic' | 'issues',
 	});
@@ -29,6 +29,7 @@ export default function ReportContents() {
 		improvements: [],
 		excludeDefects: [],
 	});
+	const { resetIssue } = useReportPage();
 
 	const serverityCount = useMemo(() => {
 		return defectServerities.reduce(
@@ -52,6 +53,17 @@ export default function ReportContents() {
 				),
 			};
 		});
+	};
+
+	const handleRefresh = async () => {
+		await mutate().then(() => {
+			initialDate(epicData);
+		});
+	};
+
+	const handleGoHome = async () => {
+		resetIssue();
+		document.location.href = '/report';
 	};
 
 	const memoizedReportDetails = useMemo(() => {
@@ -244,7 +256,7 @@ export default function ReportContents() {
 		);
 	}, [data]);
 
-	useEffect(() => {
+	const initialDate = (epicData) => {
 		if (epicData) {
 			setData({
 				defects: epicData.defects,
@@ -252,12 +264,36 @@ export default function ReportContents() {
 				excludeDefects: epicData.excludeDefects,
 			});
 		}
+	};
+
+	useEffect(() => {
+		initialDate(epicData);
 	}, [epicData]);
 
+	if (isValidating) {
+		return <Loading />;
+	}
+
 	return (
-		<div className={styles.reportContentsLayout}>{memoizedReportDetails}</div>
+		<>
+			<div className={styles.reportContentsLayout}>{memoizedReportDetails}</div>
+			<div className={styles.footer}>
+				<div className={styles.refresh}>
+					<RefreshRoundedIcon {...iconProps} onClick={() => handleRefresh()} />
+				</div>
+				<div className={styles.home}>
+					<HomeRoundedIcon {...iconProps} onClick={() => handleGoHome()} />
+				</div>
+			</div>
+		</>
 	);
 }
+
+const iconProps = {
+	sx: { fontSize: 40 },
+	cursor: 'pointer',
+	color: 'primary',
+};
 
 const IssueTableHeader = ({
 	type = 'defect',
