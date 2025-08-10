@@ -1,5 +1,4 @@
 import useSWR from 'swr';
-import useSWRMutation from 'swr/mutation';
 
 import { requestApi } from '../../api/apiClient.ts';
 import { SWR_KEYS } from '../../api/swrKeys.ts';
@@ -23,9 +22,6 @@ export default function useJiraIssue({ issueType, issueKey }: Props) {
 			? SWR_KEYS.inquiryEpicIssue(issueKey as string)
 			: SWR_KEYS.inquiryMultipleIssue(issueKey as string[]),
 		async (url: string) => {
-			console.log(
-				`요청 시작, url: ${url}, issueType: ${issueType}, issueKey: ${issueKey}`,
-			);
 			const res = await requestApi('GET', url, {}, {});
 			const excludeIssue = ['테스트 오류', '이슈아님'];
 
@@ -98,7 +94,10 @@ export default function useJiraIssue({ issueType, issueKey }: Props) {
 		},
 		{
 			suspense: true,
-			revalidateOnFocus: false,
+			revalidateOnMount: true, // 마운트 시 무조건 새 요청
+			dedupingInterval: 0, // 중복 요청 방지 시간 0
+			revalidateIfStale: true, // 캐시가 stale이면 즉시 요청
+			revalidateOnFocus: false, // 포커스 이동 시 재요청 X (원하면 true)
 		},
 	);
 
