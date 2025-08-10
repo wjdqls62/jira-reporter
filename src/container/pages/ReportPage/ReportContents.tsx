@@ -4,6 +4,7 @@ import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import styles from './ReportPage.module.scss';
+import { useReportPage } from './ReportPage.tsx';
 import { defectPriority, defectServerities } from '../../../constants/Issue.ts';
 import Loading from '../../components/UiTools/Loading.tsx';
 import { Flex, Section } from '../../components/UiTools/UiTools.tsx';
@@ -11,15 +12,10 @@ import useJiraIssue from '../../hooks/useJiraIssue.ts';
 
 import type { ISubIssue } from '../../../api/models/Epic.ts';
 
-interface Props {
-	issueType: 'epic' | 'issues' | null;
-	issueKey: string | string[] | null;
-}
-
 export default function ReportContents() {
 	const navigate = useNavigate();
 	const { state } = useLocation();
-	const { epicData, mutate, isValidating } = useJiraIssue({
+	const { epicData, mutate, isValidating, isLoading } = useJiraIssue({
 		issueKey: state.issueKey as string | string[],
 		issueType: state.issueType as 'epic' | 'issues',
 	});
@@ -33,6 +29,7 @@ export default function ReportContents() {
 		improvements: [],
 		excludeDefects: [],
 	});
+	const { resetIssue } = useReportPage();
 
 	const serverityCount = useMemo(() => {
 		return defectServerities.reduce(
@@ -64,10 +61,9 @@ export default function ReportContents() {
 		});
 	};
 
-	const handleGoHome = () => {
-		localStorage.removeItem('issueType');
-		localStorage.removeItem('issueKey');
-		navigate('/report');
+	const handleGoHome = async () => {
+		resetIssue();
+		document.location.href = '/report';
 	};
 
 	const memoizedReportDetails = useMemo(() => {
