@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 interface SectionProps {
 	title: string;
@@ -40,5 +41,18 @@ export const Section = ({ title, children }: SectionProps) => {
 			<Flex>{title}</Flex>
 			<Flex>{children}</Flex>
 		</Flex>
+	);
+};
+
+export const HelperText = ({ name }: { name: string }) => {
+	const {
+		formState: { errors },
+	} = useFormContext();
+	const errorMessage = errors[name]?.message as string | undefined;
+
+	return (
+		<div style={{ color: 'red', fontSize: '0.875rem', marginTop: '4px' }}>
+			{errorMessage}
+		</div>
 	);
 };
