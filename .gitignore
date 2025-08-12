@@ -12,7 +12,9 @@ dist
 build
 .env
 dist-ssr
+eslint.config.js
 *.local
+
 
 
 # Editor directories and files
