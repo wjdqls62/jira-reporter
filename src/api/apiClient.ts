@@ -1,6 +1,6 @@
 import axios, { type AxiosRequestConfig } from 'axios';
 
-export const baseUrl = '/rest';
+export const baseUrl = 'http://10.52.252.135:3000/api';
 
 const instance = axios.create({
 	baseURL: baseUrl,
@@ -8,12 +8,9 @@ const instance = axios.create({
 
 instance.interceptors.request.use(
 	(config) => {
-		config.auth = config.auth || {
-			username: '',
-			password: '',
-		};
-		config.auth.username = localStorage.getItem('email') || '';
-		config.auth.password = localStorage.getItem('jiraToken') || '';
+		config.headers = config.headers || {};
+		config.headers.username = localStorage.getItem('email') || '';
+		config.headers.password = localStorage.getItem('jiraToken') || '';
 		return config;
 	},
 	(error) => {
@@ -36,7 +33,7 @@ export const requestApi = async <T>(
 
 	try {
 		const response = await instance.request(axiosConfig);
-		return response.data;
+		return response.data.data;
 	} catch (error) {
 		if (error instanceof Error) {
 			throw error;

@@ -65,21 +65,21 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 		setIssueType(value);
 	};
 
-	const onSubmit = async (data: FormValues) => {
-		console.log(`data`, data);
+	const onSubmit = async (formData: FormValues) => {
 		await axios
-			.get(`${baseUrl}${SWR_KEYS.validateToken}`, {
-				auth: {
-					username: data.email,
-					password: data.accessToken,
-				},
+			.post(`${baseUrl}${SWR_KEYS.validateToken}`, {}, {
+				headers: {
+					username: formData.email,
+					password: formData.accessToken,
+				}
 			})
 			.then((res) => {
-				if (res.data.emailAddress === email) {
-					alert('Success');
-					localStorage.setItem('email', data.email);
-					localStorage.setItem('jiraToken', data.accessToken);
-					onSubmitToken(data.accessToken, data.issueKey, issueType);
+				const { data } = res;
+				if(data.message === '인증이 성공했습니다.') {
+					alert(data.message);
+					localStorage.setItem('email', formData.email);
+					localStorage.setItem('jiraToken', formData.accessToken);
+					onSubmitToken(formData.accessToken, formData.issueKey, issueType);
 				}
 			})
 			.catch((error) => {

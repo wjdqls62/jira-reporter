@@ -22,7 +22,10 @@ export default function useJiraIssue({ issueType, issueKey }: Props) {
 			? SWR_KEYS.inquiryEpicIssue(issueKey as string)
 			: SWR_KEYS.inquiryMultipleIssue(issueKey as string[]),
 		async (url: string) => {
-			const res = await requestApi('GET', url, {}, {});
+			const res = issueType === 'epic' ?  await requestApi('GET', url, {}, {}) :
+				await requestApi('post', url, {
+					issueKeys: issueKey as string[]
+				}, {});
 			const excludeIssue = ['테스트 오류', '이슈아님'];
 
 			const subIssues = res.issues.map((issue) => {
