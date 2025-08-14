@@ -6,6 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './ReportPage.module.scss';
 import { useReportPage } from './ReportPage.tsx';
 import { defectPriority, defectServerities } from '../../../constants/Issue.ts';
+import CustomChart from '../../components/CustomChart/CustomChart.tsx';
 import Loading from '../../components/UiTools/Loading.tsx';
 import { Flex, Section } from '../../components/UiTools/UiTools.tsx';
 import useJiraIssue from '../../hooks/useJiraIssue.ts';
@@ -251,6 +252,15 @@ export default function ReportContents() {
 								})}
 						</tbody>
 					</table>
+				</Section>
+				<Section title={'4. 차트'}>
+					<Section title={'4-1. 결함 원인별 발생 현황 '}>
+						<CustomChart
+							data={data.defects}
+							dataKey={'causeOfDetect'}
+							chartType={'causeOfDetect'}
+						/>
+					</Section>
 				</Section>
 			</Flex>
 		);
