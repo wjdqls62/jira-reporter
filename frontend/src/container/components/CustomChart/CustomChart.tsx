@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Modal } from '@mui/material';
 import { SketchPicker } from 'react-color';
-import { Simulate } from 'react-dom/test-utils';
 import {
 	Bar,
 	BarChart,

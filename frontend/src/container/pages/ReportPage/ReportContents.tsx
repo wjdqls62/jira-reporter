@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
-import { Popover } from '@mui/material';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import styles from './ReportPage.module.scss';
 import { useReportPage } from './ReportPage.tsx';
-import { defectPriority, defectServerities } from '../../../constants/Issue.ts';
+import { defectPriority } from '../../../constants/Issue.ts';
 import CustomChart from '../../components/CustomChart/CustomChart.tsx';
 import Loading from '../../components/UiTools/Loading.tsx';
 import { Flex, Section } from '../../components/UiTools/UiTools.tsx';
