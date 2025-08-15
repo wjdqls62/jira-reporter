@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
-import { Popover } from '@mui/material';
+import { Modal } from '@mui/material';
 import { SketchPicker } from 'react-color';
+import { Simulate } from 'react-dom/test-utils';
 import {
 	Bar,
 	BarChart,
 	CartesianGrid,
 	Cell,
 	ComposedChart,
+	Legend,
 	Line,
 	ResponsiveContainer,
 	XAxis,
 	YAxis,
 } from 'recharts';
 
+import styles from './CustomChart.module.scss';
 import useChart from '../../hooks/useChart.ts';
+import { Flex } from '../UiTools/UiTools.tsx';
 
 import type { ISubIssue } from '../../../api/models/Epic.ts';
 
@@ -22,7 +26,9 @@ interface ColorPickerProps {
 	open: boolean;
 	color: string;
 	onCommit: (color: string) => void;
+	onChangeBarSize: (size: number) => void;
 	onClose: () => void;
+	currentBarSize: number;
 }
 
 interface ChartProps {
@@ -40,13 +46,14 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 		changeFixedBarColor,
 		fixedChart,
 		toggleColorSelector,
+		changeBarSize,
 	} = useChart();
 	// 드래그 중 부드러운 이동을 위한 로컬 피커 색상 상태
 	const [pickerColor, setPickerColor] = useState<string>('');
 
 	const renderColorPicker = (type: 'causeOfDetect' | 'fixedRate') => {
 		return (
-			<ColorPickerPopover
+			<ColorPickerModal
 				id={dataKey}
 				open={
 					type === 'causeOfDetect'
@@ -68,6 +75,12 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 							)
 						: changeFixedBarColor(fixedChart.selectedBarKey, color);
 				}}
+				onChangeBarSize={(size) => changeBarSize(type, size)}
+				currentBarSize={
+					type === 'causeOfDetect'
+						? defectReasonChart.barSize
+						: fixedChart.barSize
+				}
 			/>
 		);
 	};
@@ -152,7 +165,6 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 				<ComposedChart data={mappedData}>
 					<CartesianGrid strokeDasharray={'3 3'} />
 					<XAxis dataKey={'type'} />
-					<YAxis yAxisId={'left'} dataKey={'data.length'} />
 					<YAxis
 						yAxisId={'right'}
 						orientation={'right'}
@@ -201,6 +213,8 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 						stroke={'#51D64D'}
 						strokeWidth={3}
 					/>
+					<Legend />
+
 					{renderColorPicker('fixedRate')}
 				</ComposedChart>
 			);
@@ -214,8 +228,16 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 	);
 }
 
-const ColorPickerPopover = React.memo((props: ColorPickerProps) => {
-	const { id, open, color, onCommit, onClose } = props;
+const ColorPickerModal = React.memo((props: ColorPickerProps) => {
+	const {
+		id,
+		open,
+		color,
+		onCommit,
+		onClose,
+		onChangeBarSize,
+		currentBarSize,
+	} = props;
 	const [pickerColor, setPickerColor] = useState(color);
 
 	const handleClose = () => {
@@ -223,20 +245,36 @@ const ColorPickerPopover = React.memo((props: ColorPickerProps) => {
 	};
 
 	return (
-		<Popover
-			id={`popover-${id}`}
-			open={open}
-			onClose={handleClose}
-			anchorOrigin={{ vertical: 'center', horizontal: 'center' }}>
-			<SketchPicker
-				color={pickerColor || '#fd4c4c'}
-				onChange={(c) => {
-					setPickerColor(c.hex);
-				}}
-				onChangeComplete={(c) => {
-					onCommit(c.hex);
-				}}
-			/>
-		</Popover>
+		<Modal id={`popover-${id}`} open={open} onClose={handleClose}>
+			<div className={styles.chartSettingModal}>
+				<Flex
+					flexDirection={'column'}
+					width={'100%'}
+					alignItems={'baseline'}
+					gap={20}>
+					<SketchPicker
+						color={pickerColor || '#fd4c4c'}
+						onChange={(c) => {
+							setPickerColor(c.hex);
+						}}
+						onChangeComplete={(c) => {
+							onCommit(c.hex);
+						}}
+					/>
+					<div className={styles.barSizeSetting}>
+						<label>
+							막대 굵기
+							<input
+								type={'number'}
+								defaultValue={currentBarSize}
+								onChange={(e) => {
+									onChangeBarSize(Number(e.target.value));
+								}}
+							/>
+						</label>
+					</div>
+				</Flex>
+			</div>
+		</Modal>
 	);
 });
