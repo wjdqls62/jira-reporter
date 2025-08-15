@@ -6,6 +6,8 @@ import {
 	BarChart,
 	CartesianGrid,
 	Cell,
+	ComposedChart,
+	Line,
 	ResponsiveContainer,
 	XAxis,
 	YAxis,
@@ -27,20 +29,48 @@ interface ChartProps {
 	width?: number;
 	data: ISubIssue[];
 	dataKey: string;
-	chartType: 'causeOfDetect';
+	type: 'causeOfDetect' | 'fixedRate';
 }
 
-export default function CustomChart({ data, dataKey, chartType }: ChartProps) {
+export default function CustomChart({ data, dataKey, type }: ChartProps) {
 	const {
-		changeBarColor,
-		barColor,
-		colorSelector,
-		setColorSelector,
-		setSelectedBarKey,
-		selectedBarKey,
+		changeDefectReasonBarColor,
+		defectReasonChart,
+		changeSelectedBarKey,
+		changeFixedBarColor,
+		fixedChart,
+		toggleColorSelector,
 	} = useChart();
 	// 드래그 중 부드러운 이동을 위한 로컬 피커 색상 상태
 	const [pickerColor, setPickerColor] = useState<string>('');
+
+	const renderColorPicker = (type: 'causeOfDetect' | 'fixedRate') => {
+		return (
+			<ColorPickerPopover
+				id={dataKey}
+				open={
+					type === 'causeOfDetect'
+						? defectReasonChart.isColorSelector
+						: fixedChart.isColorSelector
+				}
+				color={pickerColor}
+				onClose={() =>
+					toggleColorSelector(
+						type === 'causeOfDetect' ? 'causeOfDetect' : 'fixedRate',
+					)
+				}
+				onCommit={(color) => {
+					console.log(`onCommit: ${color}, type: ${type}`);
+					type === 'causeOfDetect'
+						? changeDefectReasonBarColor(
+								defectReasonChart.selectedBarKey,
+								color,
+							)
+						: changeFixedBarColor(fixedChart.selectedBarKey, color);
+				}}
+			/>
+		);
+	};
 
 	const chartRenderers: Record<'causeOfDetect', () => JSX.Element> = {
 		causeOfDetect: () => {
@@ -63,41 +93,123 @@ export default function CustomChart({ data, dataKey, chartType }: ChartProps) {
 					<XAxis dataKey={dataKey} interval={0} tickSize={1} />
 					<YAxis />
 					<CartesianGrid strokeDasharray={'3 3'} />
-					<Bar stackId={'bar'} dataKey={'value'} barSize={30}>
+					<Bar
+						stackId={'bar'}
+						dataKey={'value'}
+						barSize={defectReasonChart.barSize}>
 						{mappedData.map((bar) => {
 							return (
 								<>
 									<Cell
 										key={`cell-${bar[dataKey]}`}
-										fill={barColor[String(bar[dataKey])] || '#fd4c4c'}
+										fill={
+											defectReasonChart.barColor[String(bar[dataKey])] ||
+											'#fd4c4c'
+										}
 										onClick={(e) => {
 											const key = String(bar[dataKey]);
-											setSelectedBarKey(key);
-											//setPickerColor(barColor[key] || '#fd4c4c');
-											setColorSelector(true);
+											changeSelectedBarKey(key);
+											setPickerColor(
+												defectReasonChart.barColor[key] || '#fd4c4c',
+											);
+											toggleColorSelector('causeOfDetect');
 										}}
 									/>
 								</>
 							);
 						})}
 					</Bar>
-					<ColorPickerPopover
-						id={dataKey}
-						open={colorSelector}
-						color={pickerColor}
-						onClose={() => setColorSelector(false)}
-						onCommit={(color) => {
-							changeBarColor(selectedBarKey, color);
-						}}
-					/>
+					{renderColorPicker('causeOfDetect')}
 				</BarChart>
+			);
+		},
+		fixedRate: () => {
+			const dataKeys = ['충돌', '장애', '중요함', '보통', '개선', '새 기능'];
+			const filteredData = Object.entries(dataKeys).reduce(
+				(acc, [key, value]) => {
+					if (value === '개선' || value === '새 기능') {
+						acc['개선, 새기능'] = [
+							...(acc['개선, 새기능'] || []),
+							...(data || []).filter((issue) => issue.issueType === value),
+						];
+					} else {
+						acc[value] = (data || []).filter(
+							(issue) => issue.defectPriority === value,
+						);
+					}
+					return acc;
+				},
+				{},
+			);
+			const mappedData = Object.entries(filteredData).map(([key, value]) => {
+				return {
+					type: key,
+					data: filteredData[key],
+				};
+			});
+
+			return (
+				<ComposedChart data={mappedData}>
+					<CartesianGrid strokeDasharray={'3 3'} />
+					<XAxis dataKey={'type'} />
+					<YAxis yAxisId={'left'} dataKey={'data.length'} />
+					<YAxis
+						yAxisId={'right'}
+						orientation={'right'}
+						domain={[0, 100]}
+						tickFormatter={(v) => `${v}%`}
+					/>
+					<Bar
+						stackId={'allIssue'}
+						dataKey={'data.length'}
+						fill={fixedChart.barColor.all}
+						onClick={() => {
+							changeSelectedBarKey('all');
+							setPickerColor(fixedChart.barColor.fixed || '#fd4c4c');
+							toggleColorSelector('fixedRate');
+						}}
+						barSize={fixedChart.barSize}
+					/>
+					<Bar
+						stackId={'fixedIssue'}
+						fill={fixedChart.barColor.fixed}
+						dataKey={(obj) => {
+							return obj.data.filter(
+								(issue) => issue.status === '해결함' || issue.status === '닫힘',
+							).length;
+						}}
+						onClick={(data, index, event) => {
+							changeSelectedBarKey('fixed');
+							setPickerColor(fixedChart.barColor.fixed || '#fd4c4c');
+							toggleColorSelector('fixedRate');
+						}}
+						barSize={fixedChart.barSize}
+					/>
+					<Line
+						type={'monotone'}
+						dataKey={(obj) => {
+							const total = obj?.data?.length ?? 0;
+							if (!total) {
+								return 0;
+							}
+							const fixedCounts = obj.data.filter(
+								(issue) => issue.status === '해결함' || issue.status === '닫힘',
+							);
+							return (fixedCounts.length / total) * 100;
+						}}
+						yAxisId={'right'}
+						stroke={'#51D64D'}
+						strokeWidth={3}
+					/>
+					{renderColorPicker('fixedRate')}
+				</ComposedChart>
 			);
 		},
 	};
 
 	return (
 		<ResponsiveContainer width={'100%'} height={400}>
-			{chartRenderers[chartType]()}
+			{chartRenderers[type]()}
 		</ResponsiveContainer>
 	);
 }

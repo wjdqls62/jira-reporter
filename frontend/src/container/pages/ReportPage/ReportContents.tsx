@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
+import { Popover } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import styles from './ReportPage.module.scss';
@@ -14,7 +15,6 @@ import useJiraIssue from '../../hooks/useJiraIssue.ts';
 import type { ISubIssue } from '../../../api/models/Epic.ts';
 
 export default function ReportContents() {
-	const navigate = useNavigate();
 	const { state } = useLocation();
 	const { epicData, mutate, isValidating, isLoading } = useJiraIssue({
 		issueKey: state.issueKey as string | string[],
@@ -32,17 +32,13 @@ export default function ReportContents() {
 	});
 	const { resetIssue } = useReportPage();
 
-	const serverityCount = useMemo(() => {
-		return defectServerities.reduce(
-			(acc, type) => {
-				acc[type] = data.defects.filter((issue) =>
-					issue.causeOfDetect.includes(type),
-				).length;
-				return acc;
-			},
-			{} as Record<string, number>,
-		);
-	}, [data.defects]);
+	const [chartHiddenSetting, setChartHiddenSetting] = useState<{
+		causeOfDetect: boolean;
+		fixedRate: boolean;
+	}>({
+		causeOfDetect: false,
+		fixedRate: false,
+	});
 
 	const handleDeleteIssue = (issue: ISubIssue) => {
 		setData((prev) => {
@@ -254,17 +250,37 @@ export default function ReportContents() {
 					</table>
 				</Section>
 				<Section title={'4. 차트'}>
-					<Section title={'4-1. 결함 원인별 발생 현황 '}>
-						<CustomChart
-							data={data.defects}
-							dataKey={'causeOfDetect'}
-							chartType={'causeOfDetect'}
-						/>
-					</Section>
+					<Flex flexDirection={'column'}>
+						<Section
+							title={'4-1. 결함 원인별 발생 현황 ▼'}
+							onTitleClick={(e) =>
+								setChartHiddenSetting((prev) => {
+									return {
+										...prev,
+										causeOfDetect: !prev.causeOfDetect,
+									};
+								})
+							}>
+							<Flex flexDirection={'column'}>
+								<CustomChart
+									data={data.defects}
+									dataKey={'causeOfDetect'}
+									type={'causeOfDetect'}
+								/>
+							</Flex>
+						</Section>
+						<Section title={'4-2. 이슈 중요도별 수정률'}>
+							<CustomChart
+								data={[...data.defects, ...data.improvements]}
+								dataKey={'causeOfDetect'}
+								type={'fixedRate'}
+							/>
+						</Section>
+					</Flex>
 				</Section>
 			</Flex>
 		);
-	}, [data]);
+	}, [data, chartHiddenSetting]);
 
 	const initialDate = (epicData) => {
 		if (epicData) {
