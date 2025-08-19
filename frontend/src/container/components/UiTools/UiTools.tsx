@@ -4,6 +4,7 @@ import { useFormContext } from 'react-hook-form';
 interface SectionProps {
 	title: string;
 	children?: React.ReactNode;
+	onTitleClick?: (e: React.MouseEvent) => void;
 }
 
 interface FlexProps {
@@ -14,6 +15,7 @@ interface FlexProps {
 	width?: string;
 	height?: string;
 	children: React.ReactNode;
+	onClick?: (e: React.MouseEvent) => void;
 }
 
 export const Flex = ({
@@ -23,6 +25,7 @@ export const Flex = ({
 	gap = 4,
 	children,
 	width,
+	onClick,
 }: FlexProps) => {
 	const propStyles = {
 		display: 'flex',
@@ -32,13 +35,19 @@ export const Flex = ({
 		width: width ? width : '100%',
 		gap: `${gap}px`,
 	} as CSSProperties;
-	return <div style={propStyles}>{children}</div>;
+	return (
+		<div
+			style={{ ...propStyles, cursor: onClick && 'pointer' }}
+			onClick={(e) => onClick && onClick(e)}>
+			{children}
+		</div>
+	);
 };
 
-export const Section = ({ title, children }: SectionProps) => {
+export const Section = ({ title, children, onTitleClick }: SectionProps) => {
 	return (
 		<Flex flexDirection={'column'} width={'100%'}>
-			<Flex>{title}</Flex>
+			<Flex onClick={onTitleClick}>{title}</Flex>
 			<Flex>{children}</Flex>
 		</Flex>
 	);
