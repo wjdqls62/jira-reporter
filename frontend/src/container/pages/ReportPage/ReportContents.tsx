@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { type ChangeEventHandler, useEffect, useMemo, useState } from 'react';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import { useLocation } from 'react-router-dom';
@@ -31,12 +31,10 @@ export default function ReportContents() {
 	});
 	const { resetIssue } = useReportPage();
 
-	const [chartHiddenSetting, setChartHiddenSetting] = useState<{
-		causeOfDetect: boolean;
-		fixedRate: boolean;
+	const [chartTypes, setChartTypes] = useState<{
+		causeOfDetect: 'bar' | 'pie';
 	}>({
-		causeOfDetect: false,
-		fixedRate: false,
+		causeOfDetect: 'bar',
 	});
 
 	const handleDeleteIssue = (issue: ISubIssue) => {
@@ -60,6 +58,17 @@ export default function ReportContents() {
 	const handleGoHome = async () => {
 		resetIssue();
 		document.location.href = '/report';
+	};
+
+	const handleChangeCauseOfDetectType = (
+		e: React.ChangeEvent<HTMLSelectElement>,
+	) => {
+		setChartTypes((prev) => {
+			return {
+				...prev,
+				causeOfDetect: e.target.value as 'bar' | 'pie',
+			};
+		});
 	};
 
 	const memoizedReportDetails = useMemo(() => {
@@ -251,21 +260,27 @@ export default function ReportContents() {
 				<Section title={'4. 차트'}>
 					<Flex flexDirection={'column'}>
 						<Section
-							title={'4-1. 결함 원인별 발생 현황 ▼'}
-							onTitleClick={(e) =>
-								setChartHiddenSetting((prev) => {
-									return {
-										...prev,
-										causeOfDetect: !prev.causeOfDetect,
-									};
-								})
+							title={
+								<Flex>
+									<Flex>
+										<span>4-1. 결함 원인별 발생 현황</span>
+										<select onChange={handleChangeCauseOfDetectType}>
+											<option value={'bar'}>막대 그래프</option>
+											<option value={'pie'}>원형 그래프</option>
+										</select>
+									</Flex>
+								</Flex>
 							}>
 							<Flex flexDirection={'column'}>
-								<CustomChart
-									data={data.defects}
-									dataKey={'causeOfDetect'}
-									type={'causeOfDetect'}
-								/>
+								{chartTypes.causeOfDetect === 'bar' ? (
+									<CustomChart
+										data={data.defects}
+										dataKey={'causeOfDetect'}
+										type={'causeOfDetect'}
+									/>
+								) : (
+									<div>준비중</div>
+								)}
 							</Flex>
 						</Section>
 						<Section title={'4-2. 이슈 중요도별 수정률'}>
@@ -279,7 +294,7 @@ export default function ReportContents() {
 				</Section>
 			</Flex>
 		);
-	}, [data, chartHiddenSetting]);
+	}, [data, chartTypes]);
 
 	const initialDate = (epicData) => {
 		if (epicData) {

@@ -15,7 +15,7 @@ export default function useChart() {
 	const [defectReasonChart, setDefectReasonChart] = useState<DefectReasonState>(
 		{
 			isColorSelector: false,
-			barColor: initialBarColor,
+			barColor: initialBarColor2,
 			selectedBarKey: '',
 			barSize: 15,
 		},
@@ -49,7 +49,7 @@ export default function useChart() {
 	);
 
 	const changeSelectedBarKey = useCallback((key: string) => {
-		const causeOfDetectColorSet = Object.entries(initialBarColor).map(
+		const causeOfDetectColorSet = Object.entries(initialBarColor2).map(
 			([key, value]) => key,
 		);
 		if (causeOfDetectColorSet.includes(key)) {
@@ -154,4 +154,12 @@ const initialBarColor = {
 	'재현되지 않음': '#fd4c4c',
 	이슈아님: '#fd4c4c',
 	기타: '#fd4c4c',
+};
+
+const initialBarColor2 = {
+	['장애']: '#fd4c4c',
+	['충돌']: '#777777',
+	['중요함']: '#ff2ec8',
+	['보통']: '#ff8833',
+	['사소함']: '#ff9393',
 };

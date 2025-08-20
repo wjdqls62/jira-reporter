@@ -15,6 +15,7 @@ import {
 } from 'recharts';
 
 import styles from './CustomChart.module.scss';
+import { defectPriority } from '../../../constants/Issue.ts';
 import useChart from '../../hooks/useChart.ts';
 import { Flex } from '../UiTools/UiTools.tsx';
 
@@ -84,6 +85,16 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 		);
 	};
 
+	const getDefectPriorityCount = (
+		data: ISubIssue[],
+		priority: '장애' | '충돌' | '중요함' | '보통' | '사소함',
+		name: string,
+	) => {
+		return data
+			.filter((issue) => issue.causeOfDetect.includes(name))
+			.filter((issue) => issue.defectPriority === priority).length;
+	};
+
 	const chartRenderers: Record<'causeOfDetect', () => JSX.Element> = {
 		causeOfDetect: () => {
 			const counts = (data || []).reduce(
@@ -95,42 +106,42 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 				},
 				{} as Record<string, number>,
 			);
-			const mappedData = Object.entries(counts).map(([name, value]) => ({
-				[dataKey]: name,
-				value,
-			}));
+			const mappedData = Object.entries(counts).map(([name, value]) => {
+				return {
+					[dataKey]: name,
+					value: value,
+					priority: {
+						장애: getDefectPriorityCount(data, '장애', name),
+						충돌: getDefectPriorityCount(data, '충돌', name), // 충돌
+						중요함: getDefectPriorityCount(data, '중요함', name), // 중요함
+						보통: getDefectPriorityCount(data, '보통', name), // 보통
+						사소함: getDefectPriorityCount(data, '사소함', name), // 사소함
+					},
+				};
+			});
 
 			return (
 				<BarChart data={mappedData}>
 					<XAxis dataKey={dataKey} interval={0} tickSize={1} />
 					<YAxis />
 					<CartesianGrid strokeDasharray={'3 3'} />
-					<Bar
-						stackId={'bar'}
-						dataKey={'value'}
-						barSize={defectReasonChart.barSize}>
-						{mappedData.map((bar) => {
-							return (
-								<>
-									<Cell
-										key={`cell-${bar[dataKey]}`}
-										fill={
-											defectReasonChart.barColor[String(bar[dataKey])] ||
-											'#fd4c4c'
-										}
-										onClick={(e) => {
-											const key = String(bar[dataKey]);
-											changeSelectedBarKey(key);
-											setPickerColor(
-												defectReasonChart.barColor[key] || '#fd4c4c',
-											);
-											toggleColorSelector('causeOfDetect');
-										}}
-									/>
-								</>
-							);
-						})}
-					</Bar>
+					{defectPriority.map((priority) => {
+						return (
+							<Bar
+								key={`bar-${priority}`}
+								stackId={`bar-${priority}`}
+								dataKey={`priority.${priority}`}
+								barSize={defectReasonChart.barSize}
+								fill={defectReasonChart.barColor[priority] || '#fd4c4c'}
+								onClick={(e) => {
+									const key = priority;
+									changeSelectedBarKey(key);
+									setPickerColor(defectReasonChart.barColor[key] || '#fd4c4c');
+									toggleColorSelector('causeOfDetect');
+								}}
+							/>
+						);
+					})}
 					{renderColorPicker('causeOfDetect')}
 				</BarChart>
 			);
