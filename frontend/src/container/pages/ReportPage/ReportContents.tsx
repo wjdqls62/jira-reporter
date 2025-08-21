@@ -32,9 +32,9 @@ export default function ReportContents() {
 	const { resetIssue } = useReportPage();
 
 	const [chartTypes, setChartTypes] = useState<{
-		causeOfDetect: 'bar' | 'pie';
+		defectReasonChart: 'bar' | 'pie';
 	}>({
-		causeOfDetect: 'bar',
+		defectReasonChart: 'bar',
 	});
 
 	const handleDeleteIssue = (issue: ISubIssue) => {
@@ -66,7 +66,7 @@ export default function ReportContents() {
 		setChartTypes((prev) => {
 			return {
 				...prev,
-				causeOfDetect: e.target.value as 'bar' | 'pie',
+				defectReasonChart: e.target.value as 'bar' | 'pie',
 			};
 		});
 	};
@@ -272,17 +272,17 @@ export default function ReportContents() {
 								</Flex>
 							}>
 							<Flex flexDirection={'column'}>
-								{chartTypes.causeOfDetect === 'bar' ? (
+								{chartTypes.defectReasonChart === 'bar' ? (
 									<CustomChart
 										data={data.defects}
 										dataKey={'causeOfDetect'}
-										type={'causeOfDetect'}
+										type={'defectReasonChart'}
 									/>
 								) : (
 									<CustomChart
 										data={data.defects}
 										dataKey={'causeOfDetect'}
-										type={'causeOfDetect_Pie'}
+										type={'defectReasonPieChart'}
 									/>
 								)}
 							</Flex>
@@ -291,7 +291,7 @@ export default function ReportContents() {
 							<CustomChart
 								data={[...data.defects, ...data.improvements]}
 								dataKey={'causeOfDetect'}
-								type={'fixedRate'}
+								type={'fixedChart'}
 							/>
 						</Section>
 					</Flex>
