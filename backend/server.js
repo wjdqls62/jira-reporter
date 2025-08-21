@@ -6,6 +6,8 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const maxResults = 150;
+
 // CORS 설정 개선
 app.use(cors({
   origin: true, // 모든 origin 허용 (개발용)
@@ -145,7 +147,7 @@ app.post('/api/issues/search', async (req, res) => {
 
     const authHeader = createAuthHeader(username, password);
     const jql = `issueKey in (${issueKeys.join(', ')})`;
-    const url = `${JIRA_BASE_URL}/rest/api/3/search?jql=${encodeURIComponent(jql)}`;
+    const url = `${JIRA_BASE_URL}/rest/api/3/search?maxResults=${maxResults}&jql=${encodeURIComponent(jql)}`;
     
     const searchData = await makeJiraRequest(url, authHeader);
     
@@ -192,7 +194,7 @@ app.get('/api/epic/:epicKey/issues', async (req, res) => {
     }
 
     const authHeader = createAuthHeader(username, password);
-    const url = `${JIRA_BASE_URL}/rest/agile/1.0/epic/${epicKey}/issue`;
+    const url = `${JIRA_BASE_URL}/rest/agile/1.0/epic/${epicKey}/issue?maxResults=${maxResults}`;
     
     const epicIssues = await makeJiraRequest(url, authHeader);
     
