@@ -279,7 +279,11 @@ export default function ReportContents() {
 										type={'causeOfDetect'}
 									/>
 								) : (
-									<div>준비중</div>
+									<CustomChart
+										data={data.defects}
+										dataKey={'causeOfDetect'}
+										type={'causeOfDetect_Pie'}
+									/>
 								)}
 							</Flex>
 						</Section>

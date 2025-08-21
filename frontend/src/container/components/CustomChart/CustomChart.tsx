@@ -9,6 +9,8 @@ import {
 	ComposedChart,
 	Legend,
 	Line,
+	Pie,
+	PieChart,
 	ResponsiveContainer,
 	XAxis,
 	YAxis,
@@ -20,6 +22,7 @@ import useChart from '../../hooks/useChart.ts';
 import { Flex } from '../UiTools/UiTools.tsx';
 
 import type { ISubIssue } from '../../../api/models/Epic.ts';
+import type { PieLabelProps } from 'recharts/types/polar/Pie';
 
 interface ColorPickerProps {
 	id: string;
@@ -41,8 +44,11 @@ interface ChartProps {
 export default function CustomChart({ data, dataKey, type }: ChartProps) {
 	const {
 		changeDefectReasonBarColor,
+		changeDefectReasonPieColor,
 		defectReasonChart,
+		defectReasonPieChart,
 		changeSelectedBarKey,
+		changeCurrentType,
 		changeFixedBarColor,
 		fixedChart,
 		toggleColorSelector,
@@ -51,29 +57,33 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 	// 드래그 중 부드러운 이동을 위한 로컬 피커 색상 상태
 	const [pickerColor, setPickerColor] = useState<string>('');
 
-	const renderColorPicker = (type: 'causeOfDetect' | 'fixedRate') => {
+	const renderColorPicker = (
+		type: 'causeOfDetect' | 'causeOfDetectPie' | 'fixedRate',
+	) => {
+		const typeMap = {
+			['causeOfDetect']: defectReasonChart.isColorSelector,
+			['causeOfDetectPie']: defectReasonPieChart.isColorSelector,
+			['fixedRate']: fixedChart.isColorSelector,
+		};
 		return (
 			<ColorPickerModal
 				id={dataKey}
-				open={
-					type === 'causeOfDetect'
-						? defectReasonChart.isColorSelector
-						: fixedChart.isColorSelector
-				}
+				open={typeMap[type]}
 				color={pickerColor}
-				onClose={() =>
-					toggleColorSelector(
-						type === 'causeOfDetect' ? 'causeOfDetect' : 'fixedRate',
-					)
-				}
+				onClose={() => {
+					toggleColorSelector(type);
+				}}
 				onCommit={(color) => {
-					console.log(`onCommit: ${color}, type: ${type}`);
-					type === 'causeOfDetect'
-						? changeDefectReasonBarColor(
-								defectReasonChart.selectedBarKey,
-								color,
-							)
-						: changeFixedBarColor(fixedChart.selectedBarKey, color);
+					if (type === 'causeOfDetect') {
+						changeDefectReasonBarColor(defectReasonChart.selectedBarKey, color);
+					} else if (type === 'causeOfDetectPie') {
+						changeDefectReasonPieColor(
+							defectReasonPieChart.selectedBarKey,
+							color,
+						);
+					} else if (type === 'fixedRate') {
+						changeFixedBarColor(fixedChart.selectedBarKey, color);
+					}
 				}}
 				onChangeBarSize={(size) => changeBarSize(type, size)}
 				currentBarSize={
@@ -95,17 +105,26 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 			.filter((issue) => issue.defectPriority === priority).length;
 	};
 
-	const chartRenderers: Record<'causeOfDetect', () => JSX.Element> = {
+	const getCauseOfDefectCount = () => {
+		const counts = (data || []).reduce(
+			(acc, issue) => {
+				(issue.causeOfDetect || []).forEach((cause) => {
+					acc[cause] = (acc[cause] || 0) + 1;
+				});
+				return acc;
+			},
+			{} as Record<string, number>,
+		);
+		return counts;
+	};
+
+	const chartRenderers: Record<
+		'causeOfDetect' | 'causeOfDetect_Pie' | 'fixedRate',
+		() => JSX.Element
+	> = {
 		causeOfDetect: () => {
-			const counts = (data || []).reduce(
-				(acc, issue) => {
-					(issue.causeOfDetect || []).forEach((cause) => {
-						acc[cause] = (acc[cause] || 0) + 1;
-					});
-					return acc;
-				},
-				{} as Record<string, number>,
-			);
+			const counts = getCauseOfDefectCount();
+
 			const mappedData = Object.entries(counts).map(([name, value]) => {
 				return {
 					[dataKey]: name,
@@ -135,7 +154,7 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 								fill={defectReasonChart.barColor[priority] || '#fd4c4c'}
 								onClick={(e) => {
 									const key = priority;
-									changeSelectedBarKey(key);
+									changeSelectedBarKey(key, 'causeOfDetect');
 									setPickerColor(defectReasonChart.barColor[key] || '#fd4c4c');
 									toggleColorSelector('causeOfDetect');
 								}}
@@ -144,6 +163,72 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 					})}
 					{renderColorPicker('causeOfDetect')}
 				</BarChart>
+			);
+		},
+		causeOfDetect_Pie: () => {
+			//const counts = getCauseOfDefectCount();
+			const pieData = Object.entries(getCauseOfDefectCount()).map(
+				([name, value]) => {
+					return {
+						name: name,
+						value: value,
+					};
+				},
+			);
+
+			const customPieLabel = ({
+				cx,
+				cy,
+				midAngle,
+				outerRadius,
+				name,
+				value,
+			}: PieLabelProps) => {
+				// 라벨을 원 바깥에 위치시키기 위한 거리 계산
+				const RADIAN = Math.PI / 180;
+				const radius = outerRadius + 30; // 원 바깥으로 20px 떨어진 위치
+				const x = cx + radius * Math.cos(-midAngle * RADIAN);
+				const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+				// 텍스트 정렬 설정 (좌우 정렬)
+				const textAnchor = x > cx ? 'start' : 'end';
+
+				return (
+					<text
+						x={x}
+						y={y}
+						fill='#000000'
+						fontSize={13}
+						textAnchor={textAnchor}
+						dominantBaseline='central'>
+						{`${name} ${value}건`}
+					</text>
+				);
+			};
+
+			return (
+				<PieChart>
+					<Pie
+						data={pieData}
+						cy={200}
+						innerRadius={100}
+						paddingAngle={5}
+						label={customPieLabel}>
+						{pieData.map((entry) => (
+							<Cell
+								key={`cell-${entry.name}`}
+								fill={defectReasonPieChart.barColor[entry.name.trim()]}
+								onClick={() => {
+									const key = entry.name.trim();
+									changeSelectedBarKey(key, 'causeOfDetectPie');
+									setPickerColor(defectReasonPieChart.barColor[key]);
+									toggleColorSelector('causeOfDetectPie');
+								}}
+							/>
+						))}
+					</Pie>
+					{renderColorPicker('causeOfDetectPie')}
+				</PieChart>
 			);
 		},
 		fixedRate: () => {
@@ -186,7 +271,7 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 						dataKey={'data.length'}
 						fill={fixedChart.barColor.all}
 						onClick={() => {
-							changeSelectedBarKey('all');
+							changeSelectedBarKey('all', 'fixedRate');
 							setPickerColor(fixedChart.barColor.fixed || '#fd4c4c');
 							toggleColorSelector('fixedRate');
 						}}
@@ -201,7 +286,8 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 							).length;
 						}}
 						onClick={(data, index, event) => {
-							changeSelectedBarKey('fixed');
+							//changeSelectedBarKey('fixed');
+							changeSelectedBarKey('fixed', 'fixedRate');
 							setPickerColor(fixedChart.barColor.fixed || '#fd4c4c');
 							toggleColorSelector('fixedRate');
 						}}

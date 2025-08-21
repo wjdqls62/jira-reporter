@@ -12,6 +12,9 @@ interface FixedChartState extends DefectReasonState {
 }
 
 export default function useChart() {
+	const [currentType, setCurrentType] = useState<
+		'causeOfDetect' | 'causeOfDetectPie' | 'fixedRate'
+	>('causeOfDetect');
 	const [defectReasonChart, setDefectReasonChart] = useState<DefectReasonState>(
 		{
 			isColorSelector: false,
@@ -20,6 +23,13 @@ export default function useChart() {
 			barSize: 15,
 		},
 	);
+	const [defectReasonPieChart, setDefectReasonPieChart] =
+		useState<DefectReasonState>({
+			isColorSelector: false,
+			barColor: initialBarColor,
+			selectedBarKey: '',
+			barSize: 15,
+		});
 	const [fixedChart, setFixedChart] = useState<FixedChartState>({
 		isColorSelector: false,
 		barColor: fixedBarColorSet,
@@ -27,8 +37,14 @@ export default function useChart() {
 		barSize: 30,
 	});
 
+	const changeCurrentType = (
+		type: 'causeOfDetect' | 'causeOfDetectPie' | 'fixedRate',
+	) => {
+		setCurrentType(type);
+	};
+
 	const toggleColorSelector = useCallback(
-		(chartType: 'causeOfDetect' | 'fixedRate') => {
+		(chartType: 'causeOfDetect' | 'fixedRate' | 'causeOfDetectPie') => {
 			if (chartType === 'causeOfDetect') {
 				setDefectReasonChart((prev) => {
 					return {
@@ -43,23 +59,34 @@ export default function useChart() {
 						isColorSelector: !prev.isColorSelector,
 					};
 				});
+			} else if (chartType === 'causeOfDetectPie') {
+				setDefectReasonPieChart((prev) => {
+					return {
+						...prev,
+						isColorSelector: !prev.isColorSelector,
+					};
+				});
 			}
 		},
 		[],
 	);
 
-	const changeSelectedBarKey = useCallback((key: string) => {
-		const causeOfDetectColorSet = Object.entries(initialBarColor2).map(
-			([key, value]) => key,
-		);
-		if (causeOfDetectColorSet.includes(key)) {
+	const changeSelectedBarKey = useCallback((key: string, type: string) => {
+		if (type === 'causeOfDetect') {
 			setDefectReasonChart((prev) => {
 				return {
 					...prev,
 					selectedBarKey: key,
 				};
 			});
-		} else {
+		} else if (type === 'causeOfDetectPie') {
+			setDefectReasonPieChart((prev) => {
+				return {
+					...prev,
+					selectedBarKey: key,
+				};
+			});
+		} else if (type === 'fixedRate') {
 			setFixedChart((prev) => {
 				return {
 					...prev,
@@ -105,6 +132,21 @@ export default function useChart() {
 		[],
 	);
 
+	const changeDefectReasonPieColor = useCallback(
+		(barKey: string, color: string) => {
+			setDefectReasonPieChart((prev) => {
+				return {
+					...prev,
+					barColor: {
+						...prev.barColor,
+						[barKey]: color,
+					},
+				};
+			});
+		},
+		[],
+	);
+
 	const changeFixedBarColor = useCallback((barKey: string, color: string) => {
 		setFixedChart((prev) => {
 			return {
@@ -119,11 +161,14 @@ export default function useChart() {
 
 	return {
 		changeDefectReasonBarColor,
+		changeDefectReasonPieColor,
+		changeFixedBarColor,
 		defectReasonChart,
+		defectReasonPieChart,
 		fixedChart,
 		toggleColorSelector,
 		changeSelectedBarKey,
-		changeFixedBarColor,
+		changeCurrentType,
 		changeBarSize,
 	};
 }
