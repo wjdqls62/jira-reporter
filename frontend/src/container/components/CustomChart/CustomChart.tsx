@@ -11,6 +11,11 @@ import {
 	Line,
 	Pie,
 	PieChart,
+	PolarAngleAxis,
+	PolarGrid,
+	PolarRadiusAxis,
+	Radar,
+	RadarChart,
 	ResponsiveContainer,
 	XAxis,
 	YAxis,
@@ -19,26 +24,37 @@ import {
 import styles from './CustomChart.module.scss';
 import { customPieChartLabel } from './CustomChartUtils.tsx';
 import { defectPriority } from '../../../constants/Issue.ts';
-import useChart from '../../hooks/useChart.ts';
+import useChart, {
+	type initialChartStateValues,
+} from '../../hooks/useChart.ts';
 import { Flex } from '../UiTools/UiTools.tsx';
 
 import type { ISubIssue } from '../../../api/models/Epic.ts';
 
+type ChartType =
+	| 'defectReasonChart'
+	| 'defectReasonPieChart'
+	| 'defectReasonRadarChart'
+	| 'fixedChart';
+
 interface ColorPickerProps {
 	id: string;
+	type: ChartType;
 	open: boolean;
 	color: string;
 	onCommit: (color: string) => void;
 	onChangeBarSize: (size: number) => void;
+	onChangeRadarOpacity?: (value: number) => void;
 	onClose: () => void;
 	currentBarSize: number;
+	chartState: typeof initialChartStateValues;
 }
 
 interface ChartProps {
 	width?: number;
 	data: ISubIssue[];
 	dataKey: string;
-	type: 'defectReasonChart' | 'defectReasonPieChart' | 'fixedChart';
+	type: ChartType;
 }
 
 export default function CustomChart({ data, dataKey, type }: ChartProps) {
@@ -48,25 +64,43 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 		changeSelectedBarKey,
 		clearColorSelector,
 		changeBarSize,
+		changeRadarOpacity,
+		changeRadarSelectColorMode,
 	} = useChart();
 	// 드래그 중 부드러운 이동을 위한 로컬 피커 색상 상태
 	const [pickerColor, setPickerColor] = useState<string>('');
 
 	const renderColorPicker = (
-		type: 'defectReasonChart' | 'defectReasonPieChart' | 'fixedChart',
+		type:
+			| 'defectReasonChart'
+			| 'defectReasonPieChart'
+			| 'fixedChart'
+			| 'defectReasonRadarChart',
 	) => {
 		return (
 			<ColorPickerModal
 				id={dataKey}
+				type={type}
 				open={chartState[type].isColorSelector}
 				color={pickerColor}
 				onClose={() => {
 					clearColorSelector();
 				}}
 				onCommit={(color) => {
-					changeCellColor(type, chartState[type].selectedBarKey, color);
+					if (type !== 'defectReasonRadarChart') {
+						changeCellColor(type, chartState[type].selectedBarKey, color);
+					} else {
+						changeCellColor(type, null, color);
+					}
 				}}
 				onChangeBarSize={(size) => changeBarSize(type, size)}
+				onChangeRadarOpacity={(value) => {
+					changeRadarOpacity(value);
+				}}
+				onChangeRadarColorSelectMode={(color) =>
+					changeRadarSelectColorMode(color)
+				}
+				chartState={chartState}
 				currentBarSize={
 					type === 'defectReasonChart'
 						? chartState.defectReasonChart.barSize
@@ -101,6 +135,7 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 
 	const chartRenderers: Record<
 		'defectReasonChart' | 'defectReasonPieChart' | 'fixedChart',
+		'defectReasonRadarChart',
 		() => JSX.Element
 	> = {
 		defectReasonChart: () => {
@@ -261,9 +296,36 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 						strokeWidth={3}
 					/>
 					<Legend />
-
 					{renderColorPicker('fixedChart')}
 				</ComposedChart>
+			);
+		},
+		defectReasonRadarChart: () => {
+			const counts = getCauseOfDefectCount();
+			const mappedData = Object.entries(counts).map(([name, value]) => {
+				return {
+					name: name,
+					value: value,
+				};
+			});
+
+			return (
+				<RadarChart data={mappedData}>
+					<PolarGrid />
+					<PolarAngleAxis dataKey={'name'} />
+					<PolarRadiusAxis />
+					<Radar
+						dataKey={'value'}
+						stroke={chartState.defectReasonRadarChart.stroke}
+						fill={chartState.defectReasonRadarChart.fill}
+						fillOpacity={chartState.defectReasonRadarChart.opacity}
+						onClick={() => {
+							changeSelectedBarKey('radar', 'defectReasonRadarChart');
+							setPickerColor(chartState.defectReasonRadarChart.fill);
+						}}
+					/>
+					{renderColorPicker('defectReasonRadarChart')}
+				</RadarChart>
 			);
 		},
 	};
@@ -283,12 +345,49 @@ const ColorPickerModal = React.memo((props: ColorPickerProps) => {
 		onCommit,
 		onClose,
 		onChangeBarSize,
-		currentBarSize,
+		onChangeRadarOpacity,
+		type,
+		chartState,
 	} = props;
 	const [pickerColor, setPickerColor] = useState(color);
 
 	const handleClose = () => {
 		onClose();
+	};
+
+	const renderOptions = () => {
+		if (type === 'fixedChart' || type === 'defectReasonChart') {
+			return (
+				<>
+					<label>
+						막대 굵기
+						<input
+							type={'number'}
+							defaultValue={chartState[type].barSize}
+							onChange={(e) => {
+								onChangeBarSize(Number(e.target.value));
+							}}
+						/>
+					</label>
+				</>
+			);
+		} else if (type === 'defectReasonRadarChart') {
+			return (
+				<Flex flexDirection={'column'}>
+					<label>
+						투명도
+						<input
+							type={'number'}
+							defaultValue={chartState.defectReasonRadarChart.opacity}
+							step={0.1}
+							min={0.1}
+							max={1}
+							onChange={(e) => onChangeRadarOpacity(Number(e.target.value))}
+						/>
+					</label>
+				</Flex>
+			);
+		}
 	};
 
 	return (
@@ -308,18 +407,7 @@ const ColorPickerModal = React.memo((props: ColorPickerProps) => {
 							onCommit(c.hex);
 						}}
 					/>
-					<div className={styles.barSizeSetting}>
-						<label>
-							막대 굵기
-							<input
-								type={'number'}
-								defaultValue={currentBarSize}
-								onChange={(e) => {
-									onChangeBarSize(Number(e.target.value));
-								}}
-							/>
-						</label>
-					</div>
+					<div className={styles.barSizeSetting}>{renderOptions()}</div>
 				</Flex>
 			</div>
 		</Modal>

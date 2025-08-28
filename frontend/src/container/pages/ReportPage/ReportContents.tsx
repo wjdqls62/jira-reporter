@@ -32,7 +32,7 @@ export default function ReportContents() {
 	const { resetIssue } = useReportPage();
 
 	const [chartTypes, setChartTypes] = useState<{
-		defectReasonChart: 'bar' | 'pie';
+		defectReasonChart: 'bar' | 'pie' | 'radar';
 	}>({
 		defectReasonChart: 'bar',
 	});
@@ -66,7 +66,7 @@ export default function ReportContents() {
 		setChartTypes((prev) => {
 			return {
 				...prev,
-				defectReasonChart: e.target.value as 'bar' | 'pie',
+				defectReasonChart: e.target.value as 'bar' | 'pie' | 'radar',
 			};
 		});
 	};
@@ -94,6 +94,34 @@ export default function ReportContents() {
 			},
 			{} as Record<string, number>,
 		);
+
+		const renderDefectReasonChart = () => {
+			if (chartTypes.defectReasonChart === 'bar') {
+				return (
+					<CustomChart
+						data={data.defects}
+						dataKey={'causeOfDetect'}
+						type={'defectReasonChart'}
+					/>
+				);
+			} else if (chartTypes.defectReasonChart === 'pie') {
+				return (
+					<CustomChart
+						data={data.defects}
+						dataKey={'causeOfDetect'}
+						type={'defectReasonPieChart'}
+					/>
+				);
+			} else if (chartTypes.defectReasonChart === 'radar') {
+				return (
+					<CustomChart
+						data={data.defects}
+						dataKey={'causeOfDetect'}
+						type={'defectReasonRadarChart'}
+					/>
+				);
+			}
+		};
 
 		return (
 			<Flex flexDirection={'column'} gap={50}>
@@ -267,12 +295,14 @@ export default function ReportContents() {
 										<select onChange={handleChangeCauseOfDetectType}>
 											<option value={'bar'}>막대 그래프</option>
 											<option value={'pie'}>원형 그래프</option>
+											<option value={'radar'}>레이더 차트</option>
 										</select>
 									</Flex>
 								</Flex>
 							}>
 							<Flex flexDirection={'column'}>
-								{chartTypes.defectReasonChart === 'bar' ? (
+								{renderDefectReasonChart()}
+								{/*{chartTypes.defectReasonChart === 'bar' ? (
 									<CustomChart
 										data={data.defects}
 										dataKey={'causeOfDetect'}
@@ -284,7 +314,7 @@ export default function ReportContents() {
 										dataKey={'causeOfDetect'}
 										type={'defectReasonPieChart'}
 									/>
-								)}
+								)}*/}
 							</Flex>
 						</Section>
 						<Section title={'4-2. 이슈 중요도별 수정률'}>
