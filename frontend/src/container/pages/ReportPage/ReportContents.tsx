@@ -95,6 +95,10 @@ export default function ReportContents() {
 			{} as Record<string, number>,
 		);
 
+		const hasReopenIssue = data.defects.some(
+			(issue) => issue.reopenVersions.length >= 1,
+		);
+
 		const renderDefectReasonChart = () => {
 			if (chartTypes.defectReasonChart === 'bar') {
 				return (
@@ -297,6 +301,35 @@ export default function ReportContents() {
 						</tbody>
 					</table>
 				</Section>
+				{hasReopenIssue && (
+					<Section title={'2-2. 재발생 이슈'}>
+						<table border={1}>
+							<IssueTableHeader type={'reopen'} />
+							<tbody>
+								{(() => {
+									const reopenIssues = new Set(
+										data.defects.filter(
+											(issue) => issue.reopenVersions.length >= 1,
+										),
+									);
+
+									return Array.from(reopenIssues).map((issue, index) => {
+										return (
+											<tr key={'reopenIssue'}>
+												<td align={'center'}>{index + 1}</td>
+												<td>{issue.summary}</td>
+												<td align={'center'}>{issue.key}</td>
+												<td align={'center'}>{issue.priority}</td>
+												<td align={'center'}>{issue.status}</td>
+												<td>{issue.causeOfDetect.join(', ')}</td>
+											</tr>
+										);
+									});
+								})()}
+							</tbody>
+						</table>
+					</Section>
+				)}
 				<Section title={'3. 주요 개선 내역'}>
 					<table border={1}>
 						<IssueTableHeader type={'improvements'} />
@@ -399,7 +432,7 @@ const iconProps = {
 const IssueTableHeader = ({
 	type = 'defect',
 }: {
-	type?: 'defect' | 'improvements' | 'excludeDefects';
+	type?: 'defect' | 'improvements' | 'excludeDefects' | 'reopen';
 }) => {
 	return (
 		<thead>
@@ -409,7 +442,7 @@ const IssueTableHeader = ({
 			<th>심각도</th>
 			<th>처리 상태</th>
 			{type !== 'improvements' && <th>결함 원인</th>}
-			{type !== 'excludeDefects' && <th>삭제</th>}
+			{type !== 'excludeDefects' && type !== 'reopen' && <th>삭제</th>}
 		</thead>
 	);
 };
