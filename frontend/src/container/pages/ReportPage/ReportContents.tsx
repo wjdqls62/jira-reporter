@@ -153,22 +153,62 @@ export default function ReportContents() {
 										<div>{`개선, 새기능: ${data.improvements.length}건`}</div>
 									</td>
 								</tr>
-								<tr>
-									<td>결함 조치율</td>
-									<td>
-										{`${fixedIssueCount.defects} / ${data.defects.length} = ${
-											isNaN(
-												(fixedIssueCount.defects / data.defects.length) * 100,
-											)
-												? 0
-												: (
-														(fixedIssueCount.defects / data.defects.length) *
-														100
-													).toFixed(2)
-										}%`}
-									</td>
-									<td>닫힘, 해결 결함/신규 결함</td>
-								</tr>
+								{(() => {
+									const hasReopenIssue = data.defects.some(
+										(issue) => issue.reopenVersions.length >= 1,
+									);
+									return (
+										<>
+											<tr>
+												<td rowSpan={hasReopenIssue ? 2 : 1}>결함 조치율</td>
+												<td rowSpan={hasReopenIssue ? 2 : 1}>
+													{`${fixedIssueCount.defects} / ${data.defects.length} = ${
+														isNaN(
+															(fixedIssueCount.defects / data.defects.length) *
+																100,
+														)
+															? 0
+															: (
+																	(fixedIssueCount.defects /
+																		data.defects.length) *
+																	100
+																).toFixed(2)
+													}%`}
+												</td>
+												<td>닫힘, 해결 결함/신규 결함</td>
+											</tr>
+											{hasReopenIssue && (
+												<tr>
+													<td>
+														{(() => {
+															const reopenCount = data.defects.filter(
+																(issue) => issue.reopenVersions.length >= 1,
+															).length;
+															const reopenIssueKeys = new Set(
+																data.defects
+																	.filter(
+																		(issue) => issue.reopenVersions.length >= 1,
+																	)
+																	.flatMap((issue) => issue.key),
+															);
+															console.log(`reopenIssueKeys`, reopenIssueKeys);
+															return (
+																<>
+																	<div>{`재발생: ${reopenCount}건`}</div>
+																	<div>
+																		{`(${Array.from(reopenIssueKeys)
+																			.map((issue) => issue)
+																			.join(', ')})`}
+																	</div>
+																</>
+															);
+														})()}
+													</td>
+												</tr>
+											)}
+										</>
+									);
+								})()}
 								<tr>
 									<td>개선,새기능 조치율</td>
 									<td>{`${fixedIssueCount.improvements} / ${data.improvements.length} = ${
@@ -191,10 +231,12 @@ export default function ReportContents() {
 								<tr>
 									<td>결함 심각도별 분포(유효한 결함 분석)</td>
 									<td>
-										{defectPriority.map((type, index) => (
-											<div
-												key={`priority-${index}`}>{`${type}: ${priorityCount[type]}건`}</div>
-										))}
+										<div>
+											{defectPriority.map((type, index) => (
+												<div
+													key={`priority-${index}`}>{`${type}: ${priorityCount[type]}건`}</div>
+											))}
+										</div>
 									</td>
 									<td />
 								</tr>
@@ -300,22 +342,7 @@ export default function ReportContents() {
 									</Flex>
 								</Flex>
 							}>
-							<Flex flexDirection={'column'}>
-								{renderDefectReasonChart()}
-								{/*{chartTypes.defectReasonChart === 'bar' ? (
-									<CustomChart
-										data={data.defects}
-										dataKey={'causeOfDetect'}
-										type={'defectReasonChart'}
-									/>
-								) : (
-									<CustomChart
-										data={data.defects}
-										dataKey={'causeOfDetect'}
-										type={'defectReasonPieChart'}
-									/>
-								)}*/}
-							</Flex>
+							<Flex flexDirection={'column'}>{renderDefectReasonChart()}</Flex>
 						</Section>
 						<Section title={'4-2. 이슈 중요도별 수정률'}>
 							<CustomChart

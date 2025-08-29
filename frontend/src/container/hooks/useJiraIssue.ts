@@ -22,10 +22,17 @@ export default function useJiraIssue({ issueType, issueKey }: Props) {
 			? SWR_KEYS.inquiryEpicIssue(issueKey as string)
 			: SWR_KEYS.inquiryMultipleIssue(issueKey as string[]),
 		async (url: string) => {
-			const res = issueType === 'epic' ?  await requestApi('GET', url, {}, {}) :
-				await requestApi('post', url, {
-					issueKeys: issueKey as string[]
-				}, {});
+			const res =
+				issueType === 'epic'
+					? await requestApi('GET', url, {}, {})
+					: await requestApi(
+							'post',
+							url,
+							{
+								issueKeys: issueKey as string[],
+							},
+							{},
+						);
 			const excludeIssue = ['테스트 오류', '이슈아님'];
 
 			const subIssues = res.issues.map((issue) => {
@@ -50,8 +57,13 @@ export default function useJiraIssue({ issueType, issueKey }: Props) {
 					priority: issue.fields.priority.name,
 					issueType: issue.fields.issuetype.name,
 					resolutions: issue.fields?.resolutions || '',
+					// 결함 원인
 					causeOfDetect:
 						issue.fields?.customfield_10042?.map((item) => item?.value) || [],
+					// 재발생
+					reopenVersions:
+						issue.fields?.customfield_10104?.map((version) => version.name) ||
+						[],
 				} as ISubIssue;
 			});
 

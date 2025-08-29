@@ -17,4 +17,5 @@ export interface ISubIssue {
 	issueType: string;
 	resolutions: string;
 	causeOfDetect: string[];
+	reopenVersions: string[];
 }
