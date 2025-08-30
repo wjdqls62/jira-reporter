@@ -23,6 +23,7 @@ import {
 
 import styles from './CustomChart.module.scss';
 import { customPieChartLabel } from './CustomChartUtils.tsx';
+import { CustomLegend } from './CustomLegend.tsx';
 import { defectPriority } from '../../../constants/Issue.ts';
 import useChart, {
 	type initialChartStateValues,
@@ -181,6 +182,16 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 						);
 					})}
 					{renderColorPicker('defectReasonChart')}
+					<Legend
+						content={(props) => (
+							<CustomLegend
+								{...props}
+								width={14}
+								height={10}
+								chartType={'defectReasonChart'}
+							/>
+						)}
+					/>
 				</BarChart>
 			);
 		},
@@ -295,7 +306,16 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 						stroke={'#51D64D'}
 						strokeWidth={3}
 					/>
-					<Legend />
+					<Legend
+						content={(props) => (
+							<CustomLegend
+								{...props}
+								width={14}
+								height={10}
+								chartType={'fixedChart'}
+							/>
+						)}
+					/>
 					{renderColorPicker('fixedChart')}
 				</ComposedChart>
 			);

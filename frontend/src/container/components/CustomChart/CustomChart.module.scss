@@ -13,3 +13,22 @@
     padding: 10px;
   }
 }
+
+// CustomLegend 스타일 추가
+.customLegend {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+
+  .fixedChartLegend {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .rectIcon {
+
+  }
+}
+
