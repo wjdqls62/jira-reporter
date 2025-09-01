@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { type ChangeEventHandler, useEffect, useMemo, useState } from 'react';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import { useLocation } from 'react-router-dom';
@@ -18,25 +18,26 @@ export default function ReportContents() {
 	const { epicData, mutate, isValidating, isLoading } = useJiraIssue({
 		issueKey: state.issueKey as string | string[],
 		issueType: state.issueType as 'epic' | 'issues',
+		checkListKey: state?.checkListKey || null,
 	});
 
 	const [data, setData] = useState<{
 		defects: ISubIssue[];
 		improvements: ISubIssue[];
 		excludeDefects: ISubIssue[];
+		checkList: ISubIssue[];
 	}>({
 		defects: [],
 		improvements: [],
 		excludeDefects: [],
+		checkList: [],
 	});
 	const { resetIssue } = useReportPage();
 
-	const [chartHiddenSetting, setChartHiddenSetting] = useState<{
-		causeOfDetect: boolean;
-		fixedRate: boolean;
+	const [chartTypes, setChartTypes] = useState<{
+		defectReasonChart: 'bar' | 'pie' | 'radar';
 	}>({
-		causeOfDetect: false,
-		fixedRate: false,
+		defectReasonChart: 'bar',
 	});
 
 	const handleDeleteIssue = (issue: ISubIssue) => {
@@ -62,10 +63,33 @@ export default function ReportContents() {
 		document.location.href = '/report';
 	};
 
+	const handleChangeCauseOfDetectType = (
+		e: React.ChangeEvent<HTMLSelectElement>,
+	) => {
+		setChartTypes((prev) => {
+			return {
+				...prev,
+				defectReasonChart: e.target.value as 'bar' | 'pie' | 'radar',
+			};
+		});
+	};
+
 	const memoizedReportDetails = useMemo(() => {
 		const versions = new Set(
 			data.defects.flatMap((issue) => issue.versions.map((ver) => ver.name)),
 		);
+
+		const issueCount = {
+			defects: data.defects.length,
+			improvements: data.improvements.length,
+			checkList: {
+				defect: data.checkList.filter((issue) => issue.issueType === '결함')
+					.length,
+				improvements: data.checkList.filter(
+					(issue) => issue.issueType === '개선',
+				).length,
+			},
+		};
 
 		const fixedIssueCount = {
 			defects: data.defects.filter(
@@ -74,6 +98,21 @@ export default function ReportContents() {
 			improvements: data.improvements.filter(
 				(issue) => issue.status === '닫힘' || issue.status === '해결함',
 			).length,
+			checkList: {
+				defect: data.checkList
+					.filter((issue) => issue.issueType === '결함')
+					.filter(
+						(issue) => issue.status === '닫힘' || issue.status === '해결함',
+					).length,
+				improvements: data.checkList
+					.filter(
+						(issue) =>
+							issue.issueType === '개선' || issue.issueType === '새 기능',
+					)
+					.filter(
+						(issue) => issue.status === '닫힘' || issue.status === '해결함',
+					).length,
+			},
 		};
 
 		const priorityCount = defectPriority.reduce(
@@ -85,6 +124,39 @@ export default function ReportContents() {
 			},
 			{} as Record<string, number>,
 		);
+
+		const hasReopenIssue = data.defects.some(
+			(issue) => issue.reopenVersions.length >= 1,
+		);
+		const hasCheckListIssue = data.checkList.some((issue) => issue);
+
+		const renderDefectReasonChart = () => {
+			if (chartTypes.defectReasonChart === 'bar') {
+				return (
+					<CustomChart
+						data={data.defects}
+						dataKey={'causeOfDetect'}
+						type={'defectReasonChart'}
+					/>
+				);
+			} else if (chartTypes.defectReasonChart === 'pie') {
+				return (
+					<CustomChart
+						data={data.defects}
+						dataKey={'causeOfDetect'}
+						type={'defectReasonPieChart'}
+					/>
+				);
+			} else if (chartTypes.defectReasonChart === 'radar') {
+				return (
+					<CustomChart
+						data={data.defects}
+						dataKey={'causeOfDetect'}
+						type={'defectReasonRadarChart'}
+					/>
+				);
+			}
+		};
 
 		return (
 			<Flex flexDirection={'column'} gap={50}>
@@ -107,6 +179,38 @@ export default function ReportContents() {
 									<td />
 									<td>Working Day(n일)</td>
 								</tr>
+								{hasCheckListIssue && (
+									<>
+										<tr>
+											<td rowSpan={2}>확인 대상</td>
+											<td>결함 조치율</td>
+											<td>
+												{(() => {
+													const fixedRate =
+														(fixedIssueCount.checkList.defect /
+															issueCount.checkList.defect) *
+														100;
+													return `${fixedIssueCount.checkList.defect} / ${issueCount.checkList.defect} = ${fixedRate}%`;
+												})()}
+											</td>
+											<td>닫힘,해결 /전체</td>
+										</tr>
+										<tr>
+											<td>개선,새 기능 조치율</td>
+											<td>
+												{(() => {
+													const fixedRate =
+														(fixedIssueCount.checkList.improvements /
+															issueCount.checkList.improvements) *
+														100;
+													return `${fixedIssueCount.checkList.improvements} / ${issueCount.checkList.improvements} = ${isNaN(fixedRate) ? 0 : fixedRate}%`;
+												})()}
+											</td>
+											<td>닫힘,해결 /전체(개선,새기능)</td>
+										</tr>
+									</>
+								)}
+
 								<tr>
 									<td rowSpan={4}>QC 이슈</td>
 									<td>신규 등록 이슈</td>
@@ -116,22 +220,61 @@ export default function ReportContents() {
 										<div>{`개선, 새기능: ${data.improvements.length}건`}</div>
 									</td>
 								</tr>
-								<tr>
-									<td>결함 조치율</td>
-									<td>
-										{`${fixedIssueCount.defects} / ${data.defects.length} = ${
-											isNaN(
-												(fixedIssueCount.defects / data.defects.length) * 100,
-											)
-												? 0
-												: (
-														(fixedIssueCount.defects / data.defects.length) *
-														100
-													).toFixed(2)
-										}%`}
-									</td>
-									<td>닫힘, 해결 결함/신규 결함</td>
-								</tr>
+								{(() => {
+									const hasReopenIssue = data.defects.some(
+										(issue) => issue.reopenVersions.length >= 1,
+									);
+									return (
+										<>
+											<tr>
+												<td rowSpan={hasReopenIssue ? 2 : 1}>결함 조치율</td>
+												<td rowSpan={hasReopenIssue ? 2 : 1}>
+													{`${fixedIssueCount.defects} / ${data.defects.length} = ${
+														isNaN(
+															(fixedIssueCount.defects / data.defects.length) *
+																100,
+														)
+															? 0
+															: (
+																	(fixedIssueCount.defects /
+																		data.defects.length) *
+																	100
+																).toFixed(2)
+													}%`}
+												</td>
+												<td>닫힘, 해결 결함/신규 결함</td>
+											</tr>
+											{hasReopenIssue && (
+												<tr>
+													<td>
+														{(() => {
+															const reopenCount = data.defects.filter(
+																(issue) => issue.reopenVersions.length >= 1,
+															).length;
+															const reopenIssueKeys = new Set(
+																data.defects
+																	.filter(
+																		(issue) => issue.reopenVersions.length >= 1,
+																	)
+																	.flatMap((issue) => issue.key),
+															);
+															return (
+																<>
+																	<div>{`재발생: ${reopenCount}건`}</div>
+																	<div>
+																		{`(${Array.from(reopenIssueKeys)
+																			.map((issue) => issue)
+																			.join(', ')})`}
+																	</div>
+																</>
+															);
+														})()}
+													</td>
+												</tr>
+											)}
+										</>
+									);
+								})()}
 								<tr>
 									<td>개선,새기능 조치율</td>
 									<td>{`${fixedIssueCount.improvements} / ${data.improvements.length} = ${
@@ -154,13 +297,50 @@ export default function ReportContents() {
 								<tr>
 									<td>결함 심각도별 분포(유효한 결함 분석)</td>
 									<td>
-										{defectPriority.map((type, index) => (
-											<div
-												key={`priority-${index}`}>{`${type}: ${priorityCount[type]}건`}</div>
-										))}
+										<div>
+											{defectPriority.map((type, index) => (
+												<div
+													key={`priority-${index}`}>{`${type}: ${priorityCount[type]}건`}</div>
+											))}
+										</div>
 									</td>
 									<td />
 								</tr>
+								{hasCheckListIssue && (
+									<>
+										<tr>
+											<td rowSpan={2}>전체 이슈</td>
+											<td>결함 조치율</td>
+											<td>
+												{(() => {
+													const fixedRate =
+														((fixedIssueCount.defects +
+															fixedIssueCount.checkList.defect) /
+															(issueCount.defects +
+																issueCount.checkList.defect)) *
+														100;
+													return `${fixedIssueCount.defects + fixedIssueCount.checkList.defect} / ${issueCount.defects + issueCount.checkList.defect} = ${fixedRate}`;
+												})()}
+											</td>
+											<td>확인대상(결함,작업) + QC결함</td>
+										</tr>
+										<tr>
+											<td>개선 조치율</td>
+											<td>
+												{(() => {
+													const fixedRate =
+														((fixedIssueCount.improvements +
+															fixedIssueCount.checkList.improvements) /
+															(issueCount.improvements +
+																issueCount.checkList.improvements)) *
+														100;
+													return `${fixedIssueCount.improvements + fixedIssueCount.checkList.improvements} / ${issueCount.improvements + issueCount.checkList.improvements} = ${fixedRate}`;
+												})()}
+											</td>
+											<td>확인대상 + 신규 개선,새기능</td>
+										</tr>
+									</>
+								)}
 							</tbody>
 						</table>
 					</div>
@@ -218,6 +398,35 @@ export default function ReportContents() {
 						</tbody>
 					</table>
 				</Section>
+				{hasReopenIssue && (
+					<Section title={'2-2. 재발생 이슈'}>
+						<table border={1}>
+							<IssueTableHeader type={'reopen'} />
+							<tbody>
+								{(() => {
+									const reopenIssues = new Set(
+										data.defects.filter(
+											(issue) => issue.reopenVersions.length >= 1,
+										),
+									);
+
+									return Array.from(reopenIssues).map((issue, index) => {
+										return (
+											<tr key={'reopenIssue'}>
+												<td align={'center'}>{index + 1}</td>
+												<td>{issue.summary}</td>
+												<td align={'center'}>{issue.key}</td>
+												<td align={'center'}>{issue.priority}</td>
+												<td align={'center'}>{issue.status}</td>
+												<td>{issue.causeOfDetect.join(', ')}</td>
+											</tr>
+										);
+									});
+								})()}
+							</tbody>
+						</table>
+					</Section>
+				)}
 				<Section title={'3. 주요 개선 내역'}>
 					<table border={1}>
 						<IssueTableHeader type={'improvements'} />
@@ -251,35 +460,32 @@ export default function ReportContents() {
 				<Section title={'4. 차트'}>
 					<Flex flexDirection={'column'}>
 						<Section
-							title={'4-1. 결함 원인별 발생 현황 ▼'}
-							onTitleClick={(e) =>
-								setChartHiddenSetting((prev) => {
-									return {
-										...prev,
-										causeOfDetect: !prev.causeOfDetect,
-									};
-								})
+							title={
+								<Flex>
+									<Flex>
+										<span>4-1. 결함 원인별 발생 현황</span>
+										<select onChange={handleChangeCauseOfDetectType}>
+											<option value={'bar'}>막대 그래프</option>
+											<option value={'pie'}>원형 그래프</option>
+											<option value={'radar'}>레이더 차트</option>
+										</select>
+									</Flex>
+								</Flex>
 							}>
-							<Flex flexDirection={'column'}>
-								<CustomChart
-									data={data.defects}
-									dataKey={'causeOfDetect'}
-									type={'causeOfDetect'}
-								/>
-							</Flex>
+							<Flex flexDirection={'column'}>{renderDefectReasonChart()}</Flex>
 						</Section>
 						<Section title={'4-2. 이슈 중요도별 수정률'}>
 							<CustomChart
 								data={[...data.defects, ...data.improvements]}
 								dataKey={'causeOfDetect'}
-								type={'fixedRate'}
+								type={'fixedChart'}
 							/>
 						</Section>
 					</Flex>
 				</Section>
 			</Flex>
 		);
-	}, [data, chartHiddenSetting]);
+	}, [data, chartTypes]);
 
 	const initialDate = (epicData) => {
 		if (epicData) {
@@ -287,6 +493,7 @@ export default function ReportContents() {
 				defects: epicData.defects,
 				improvements: epicData.improvements,
 				excludeDefects: epicData.excludeDefects,
+				checkList: epicData.checkList,
 			});
 		}
 	};
@@ -323,7 +530,7 @@ const iconProps = {
 const IssueTableHeader = ({
 	type = 'defect',
 }: {
-	type?: 'defect' | 'improvements' | 'excludeDefects';
+	type?: 'defect' | 'improvements' | 'excludeDefects' | 'reopen';
 }) => {
 	return (
 		<thead>
@@ -333,7 +540,7 @@ const IssueTableHeader = ({
 			<th>심각도</th>
 			<th>처리 상태</th>
 			{type !== 'improvements' && <th>결함 원인</th>}
-			{type !== 'excludeDefects' && <th>삭제</th>}
+			{type !== 'excludeDefects' && type !== 'reopen' && <th>삭제</th>}
 		</thead>
 	);
 };

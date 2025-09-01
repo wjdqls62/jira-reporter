@@ -9,133 +9,229 @@ import {
 	ComposedChart,
 	Legend,
 	Line,
+	Pie,
+	PieChart,
+	PolarAngleAxis,
+	PolarGrid,
+	PolarRadiusAxis,
+	Radar,
+	RadarChart,
 	ResponsiveContainer,
 	XAxis,
 	YAxis,
 } from 'recharts';
 
 import styles from './CustomChart.module.scss';
-import useChart from '../../hooks/useChart.ts';
+import { customPieChartLabel } from './CustomChartUtils.tsx';
+import { CustomLegend } from './CustomLegend.tsx';
+import { defectPriority } from '../../../constants/Issue.ts';
+import useChart, {
+	type initialChartStateValues,
+} from '../../hooks/useChart.ts';
 import { Flex } from '../UiTools/UiTools.tsx';
 
 import type { ISubIssue } from '../../../api/models/Epic.ts';
 
+type ChartType =
+	| 'defectReasonChart'
+	| 'defectReasonPieChart'
+	| 'defectReasonRadarChart'
+	| 'fixedChart';
+
 interface ColorPickerProps {
 	id: string;
+	type: ChartType;
 	open: boolean;
 	color: string;
 	onCommit: (color: string) => void;
 	onChangeBarSize: (size: number) => void;
+	onChangeRadarOpacity?: (value: number) => void;
 	onClose: () => void;
 	currentBarSize: number;
+	chartState: typeof initialChartStateValues;
 }
 
 interface ChartProps {
 	width?: number;
 	data: ISubIssue[];
 	dataKey: string;
-	type: 'causeOfDetect' | 'fixedRate';
+	type: ChartType;
 }
 
 export default function CustomChart({ data, dataKey, type }: ChartProps) {
 	const {
-		changeDefectReasonBarColor,
-		defectReasonChart,
+		changeCellColor,
+		chartState,
 		changeSelectedBarKey,
-		changeFixedBarColor,
-		fixedChart,
-		toggleColorSelector,
+		clearColorSelector,
 		changeBarSize,
+		changeRadarOpacity,
+		changeRadarSelectColorMode,
 	} = useChart();
 	// 드래그 중 부드러운 이동을 위한 로컬 피커 색상 상태
 	const [pickerColor, setPickerColor] = useState<string>('');
 
-	const renderColorPicker = (type: 'causeOfDetect' | 'fixedRate') => {
+	const renderColorPicker = (
+		type:
+			| 'defectReasonChart'
+			| 'defectReasonPieChart'
+			| 'fixedChart'
+			| 'defectReasonRadarChart',
+	) => {
 		return (
 			<ColorPickerModal
 				id={dataKey}
-				open={
-					type === 'causeOfDetect'
-						? defectReasonChart.isColorSelector
-						: fixedChart.isColorSelector
-				}
+				type={type}
+				open={chartState[type].isColorSelector}
 				color={pickerColor}
-				onClose={() =>
-					toggleColorSelector(
-						type === 'causeOfDetect' ? 'causeOfDetect' : 'fixedRate',
-					)
-				}
+				onClose={() => {
+					clearColorSelector();
+				}}
 				onCommit={(color) => {
-					console.log(`onCommit: ${color}, type: ${type}`);
-					type === 'causeOfDetect'
-						? changeDefectReasonBarColor(
-								defectReasonChart.selectedBarKey,
-								color,
-							)
-						: changeFixedBarColor(fixedChart.selectedBarKey, color);
+					if (type !== 'defectReasonRadarChart') {
+						changeCellColor(type, chartState[type].selectedBarKey, color);
+					} else {
+						changeCellColor(type, null, color);
+					}
 				}}
 				onChangeBarSize={(size) => changeBarSize(type, size)}
+				onChangeRadarOpacity={(value) => {
+					changeRadarOpacity(value);
+				}}
+				onChangeRadarColorSelectMode={(color) =>
+					changeRadarSelectColorMode(color)
+				}
+				chartState={chartState}
 				currentBarSize={
-					type === 'causeOfDetect'
-						? defectReasonChart.barSize
-						: fixedChart.barSize
+					type === 'defectReasonChart'
+						? chartState.defectReasonChart.barSize
+						: chartState.fixedChart.barSize
 				}
 			/>
 		);
 	};
 
-	const chartRenderers: Record<'causeOfDetect', () => JSX.Element> = {
-		causeOfDetect: () => {
-			const counts = (data || []).reduce(
-				(acc, issue) => {
-					(issue.causeOfDetect || []).forEach((cause) => {
-						acc[cause] = (acc[cause] || 0) + 1;
-					});
-					return acc;
-				},
-				{} as Record<string, number>,
-			);
-			const mappedData = Object.entries(counts).map(([name, value]) => ({
-				[dataKey]: name,
-				value,
-			}));
+	const getDefectPriorityCount = (
+		data: ISubIssue[],
+		priority: '장애' | '충돌' | '중요함' | '보통' | '사소함',
+		name: string,
+	) => {
+		return data
+			.filter((issue) => issue.causeOfDetect.includes(name))
+			.filter((issue) => issue.defectPriority === priority).length;
+	};
+
+	const getCauseOfDefectCount = () => {
+		const counts = (data || []).reduce(
+			(acc, issue) => {
+				(issue.causeOfDetect || []).forEach((cause) => {
+					acc[cause] = (acc[cause] || 0) + 1;
+				});
+				return acc;
+			},
+			{} as Record<string, number>,
+		);
+		return counts;
+	};
+
+	const chartRenderers: Record<
+		'defectReasonChart' | 'defectReasonPieChart' | 'fixedChart',
+		'defectReasonRadarChart',
+		() => JSX.Element
+	> = {
+		defectReasonChart: () => {
+			const counts = getCauseOfDefectCount();
+
+			const mappedData = Object.entries(counts).map(([name, value]) => {
+				return {
+					[dataKey]: name,
+					value: value,
+					priority: {
+						장애: getDefectPriorityCount(data, '장애', name),
+						충돌: getDefectPriorityCount(data, '충돌', name), // 충돌
+						중요함: getDefectPriorityCount(data, '중요함', name), // 중요함
+						보통: getDefectPriorityCount(data, '보통', name), // 보통
+						사소함: getDefectPriorityCount(data, '사소함', name), // 사소함
+					},
+				};
+			});
 
 			return (
 				<BarChart data={mappedData}>
 					<XAxis dataKey={dataKey} interval={0} tickSize={1} />
 					<YAxis />
 					<CartesianGrid strokeDasharray={'3 3'} />
-					<Bar
-						stackId={'bar'}
-						dataKey={'value'}
-						barSize={defectReasonChart.barSize}>
-						{mappedData.map((bar) => {
-							return (
-								<>
-									<Cell
-										key={`cell-${bar[dataKey]}`}
-										fill={
-											defectReasonChart.barColor[String(bar[dataKey])] ||
-											'#fd4c4c'
-										}
-										onClick={(e) => {
-											const key = String(bar[dataKey]);
-											changeSelectedBarKey(key);
-											setPickerColor(
-												defectReasonChart.barColor[key] || '#fd4c4c',
-											);
-											toggleColorSelector('causeOfDetect');
-										}}
-									/>
-								</>
-							);
-						})}
-					</Bar>
-					{renderColorPicker('causeOfDetect')}
+					{defectPriority.map((priority) => {
+						return (
+							<Bar
+								key={`bar-${priority}`}
+								stackId={`bar-${priority}`}
+								dataKey={`priority.${priority}`}
+								barSize={chartState.defectReasonChart.barSize}
+								fill={
+									chartState.defectReasonChart.barColor[priority] || '#fd4c4c'
+								}
+								onClick={(e) => {
+									const key = priority;
+									changeSelectedBarKey(key, 'defectReasonChart');
+									setPickerColor(
+										chartState.defectReasonChart.barColor[key] || '#fd4c4c',
+									);
+								}}
+							/>
+						);
+					})}
+					{renderColorPicker('defectReasonChart')}
+					<Legend
+						content={(props) => (
+							<CustomLegend
+								{...props}
+								width={14}
+								height={10}
+								chartType={'defectReasonChart'}
+							/>
+						)}
+					/>
 				</BarChart>
 			);
 		},
-		fixedRate: () => {
+		defectReasonPieChart: () => {
+			const pieData = Object.entries(getCauseOfDefectCount()).map(
+				([name, value]) => {
+					return {
+						name: name,
+						value: value,
+					};
+				},
+			);
+
+			return (
+				<PieChart>
+					<Pie
+						data={pieData}
+						cy={200}
+						innerRadius={100}
+						paddingAngle={5}
+						label={customPieChartLabel}>
+						{pieData.map((entry) => (
+							<Cell
+								key={`cell-${entry.name}`}
+								fill={
+									chartState.defectReasonPieChart.barColor[entry.name.trim()]
+								}
+								onClick={() => {
+									const key = entry.name.trim();
+									changeSelectedBarKey(key, 'defectReasonPieChart');
+									setPickerColor(chartState.defectReasonPieChart.barColor[key]);
+								}}
+							/>
+						))}
+					</Pie>
+					{renderColorPicker('defectReasonPieChart')}
+				</PieChart>
+			);
+		},
+		fixedChart: () => {
 			const dataKeys = ['충돌', '장애', '중요함', '보통', '개선', '새 기능'];
 			const filteredData = Object.entries(dataKeys).reduce(
 				(acc, [key, value]) => {
@@ -173,28 +269,26 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 					<Bar
 						stackId={'allIssue'}
 						dataKey={'data.length'}
-						fill={fixedChart.barColor.all}
+						fill={chartState.fixedChart.barColor.all}
 						onClick={() => {
-							changeSelectedBarKey('all');
-							setPickerColor(fixedChart.barColor.fixed || '#fd4c4c');
-							toggleColorSelector('fixedRate');
+							changeSelectedBarKey('all', 'fixedChart');
+							setPickerColor(chartState.fixedChart.barColor.fixed || '#fd4c4c');
 						}}
-						barSize={fixedChart.barSize}
+						barSize={chartState.fixedChart.barSize}
 					/>
 					<Bar
 						stackId={'fixedIssue'}
-						fill={fixedChart.barColor.fixed}
+						fill={chartState.fixedChart.barColor.fixed}
 						dataKey={(obj) => {
 							return obj.data.filter(
 								(issue) => issue.status === '해결함' || issue.status === '닫힘',
 							).length;
 						}}
 						onClick={(data, index, event) => {
-							changeSelectedBarKey('fixed');
-							setPickerColor(fixedChart.barColor.fixed || '#fd4c4c');
-							toggleColorSelector('fixedRate');
+							changeSelectedBarKey('fixed', 'fixedChart');
+							setPickerColor(chartState.fixedChart.barColor.fixed || '#fd4c4c');
 						}}
-						barSize={fixedChart.barSize}
+						barSize={chartState.fixedChart.barSize}
 					/>
 					<Line
 						type={'monotone'}
@@ -212,10 +306,46 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 						stroke={'#51D64D'}
 						strokeWidth={3}
 					/>
-					<Legend />
-
-					{renderColorPicker('fixedRate')}
+					<Legend
+						content={(props) => (
+							<CustomLegend
+								{...props}
+								width={14}
+								height={10}
+								chartType={'fixedChart'}
+							/>
+						)}
+					/>
+					{renderColorPicker('fixedChart')}
 				</ComposedChart>
+			);
+		},
+		defectReasonRadarChart: () => {
+			const counts = getCauseOfDefectCount();
+			const mappedData = Object.entries(counts).map(([name, value]) => {
+				return {
+					name: name,
+					value: value,
+				};
+			});
+
+			return (
+				<RadarChart data={mappedData}>
+					<PolarGrid />
+					<PolarAngleAxis dataKey={'name'} />
+					<PolarRadiusAxis />
+					<Radar
+						dataKey={'value'}
+						stroke={chartState.defectReasonRadarChart.stroke}
+						fill={chartState.defectReasonRadarChart.fill}
+						fillOpacity={chartState.defectReasonRadarChart.opacity}
+						onClick={() => {
+							changeSelectedBarKey('radar', 'defectReasonRadarChart');
+							setPickerColor(chartState.defectReasonRadarChart.fill);
+						}}
+					/>
+					{renderColorPicker('defectReasonRadarChart')}
+				</RadarChart>
 			);
 		},
 	};
@@ -235,12 +365,49 @@ const ColorPickerModal = React.memo((props: ColorPickerProps) => {
 		onCommit,
 		onClose,
 		onChangeBarSize,
-		currentBarSize,
+		onChangeRadarOpacity,
+		type,
+		chartState,
 	} = props;
 	const [pickerColor, setPickerColor] = useState(color);
 
 	const handleClose = () => {
 		onClose();
+	};
+
+	const renderOptions = () => {
+		if (type === 'fixedChart' || type === 'defectReasonChart') {
+			return (
+				<>
+					<label>
+						막대 굵기
+						<input
+							type={'number'}
+							defaultValue={chartState[type].barSize}
+							onChange={(e) => {
+								onChangeBarSize(Number(e.target.value));
+							}}
+						/>
+					</label>
+				</>
+			);
+		} else if (type === 'defectReasonRadarChart') {
+			return (
+				<Flex flexDirection={'column'}>
+					<label>
+						투명도
+						<input
+							type={'number'}
+							defaultValue={chartState.defectReasonRadarChart.opacity}
+							step={0.1}
+							min={0.1}
+							max={1}
+							onChange={(e) => onChangeRadarOpacity(Number(e.target.value))}
+						/>
+					</label>
+				</Flex>
+			);
+		}
 	};
 
 	return (
@@ -260,18 +427,7 @@ const ColorPickerModal = React.memo((props: ColorPickerProps) => {
 							onCommit(c.hex);
 						}}
 					/>
-					<div className={styles.barSizeSetting}>
-						<label>
-							막대 굵기
-							<input
-								type={'number'}
-								defaultValue={currentBarSize}
-								onChange={(e) => {
-									onChangeBarSize(Number(e.target.value));
-								}}
-							/>
-						</label>
-					</div>
+					<div className={styles.barSizeSetting}>{renderOptions()}</div>
 				</Flex>
 			</div>
 		</Modal>

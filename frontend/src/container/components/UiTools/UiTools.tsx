@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 interface SectionProps {
-	title: string;
+	title: string | React.ReactNode;
 	children?: React.ReactNode;
 	onTitleClick?: (e: React.MouseEvent) => void;
 }

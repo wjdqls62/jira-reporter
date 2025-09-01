@@ -11,93 +11,52 @@ interface FixedChartState extends DefectReasonState {
 	selectedBarKey: 'all' | 'fixed';
 }
 
+interface RadarChartState {
+	fill: string;
+	opacity: number;
+	stroke: string;
+	isColorSelector: boolean;
+}
+
 export default function useChart() {
-	const [defectReasonChart, setDefectReasonChart] = useState<DefectReasonState>(
-		{
-			isColorSelector: false,
-			barColor: initialBarColor,
-			selectedBarKey: '',
-			barSize: 15,
-		},
-	);
-	const [fixedChart, setFixedChart] = useState<FixedChartState>({
-		isColorSelector: false,
-		barColor: fixedBarColorSet,
-		selectedBarKey: 'all',
-		barSize: 30,
-	});
+	const [chartState, setChartState] = useState<{
+		defectReasonChart: DefectReasonState;
+		defectReasonPieChart: DefectReasonState;
+		defectReasonRadarChart: RadarChartState;
+		fixedChart: FixedChartState;
+	}>(initialChartStateValues);
 
-	const toggleColorSelector = useCallback(
-		(chartType: 'causeOfDetect' | 'fixedRate') => {
-			if (chartType === 'causeOfDetect') {
-				setDefectReasonChart((prev) => {
-					return {
-						...prev,
-						isColorSelector: !prev.isColorSelector,
-					};
-				});
-			} else if (chartType === 'fixedRate') {
-				setFixedChart((prev) => {
-					return {
-						...prev,
-						isColorSelector: !prev.isColorSelector,
-					};
-				});
-			}
-		},
-		[],
-	);
-
-	const changeSelectedBarKey = useCallback((key: string) => {
-		const causeOfDetectColorSet = Object.entries(initialBarColor).map(
-			([key, value]) => key,
-		);
-		if (causeOfDetectColorSet.includes(key)) {
-			setDefectReasonChart((prev) => {
-				return {
-					...prev,
-					selectedBarKey: key,
-				};
-			});
-		} else {
-			setFixedChart((prev) => {
-				return {
-					...prev,
-					selectedBarKey: key,
-				};
-			});
-		}
+	const clearColorSelector = useCallback(() => {
+		setChartState((prev) => {
+			return {
+				defectReasonChart: {
+					...prev.defectReasonChart,
+					isColorSelector: false,
+				},
+				defectReasonPieChart: {
+					...prev.defectReasonPieChart,
+					isColorSelector: false,
+				},
+				fixedChart: {
+					...prev.fixedChart,
+					isColorSelector: false,
+				},
+				defectReasonRadarChart: {
+					...prev.defectReasonRadarChart,
+					isColorSelector: false,
+				},
+			};
+		});
 	}, []);
 
-	const changeBarSize = useCallback(
-		(type: 'causeOfDetect' | 'fixedRate', size: number) => {
-			if (type === 'causeOfDetect') {
-				setDefectReasonChart((prev) => {
-					return {
-						...prev,
-						barSize: size,
-					};
-				});
-			} else {
-				setFixedChart((prev) => {
-					return {
-						...prev,
-						barSize: size,
-					};
-				});
-			}
-		},
-		[],
-	);
-
-	const changeDefectReasonBarColor = useCallback(
-		(barKey: string, color: string) => {
-			setDefectReasonChart((prev) => {
+	const toggleColorSelector = useCallback(
+		(type: 'defectReasonChart' | 'defectReasonPieChart' | 'fixedChart') => {
+			setChartState((prev) => {
 				return {
 					...prev,
-					barColor: {
-						...prev.barColor,
-						[barKey]: color,
+					[type]: {
+						...prev[type as keyof typeof prev],
+						isColorSelector: !prev[type as keyof typeof prev].isColorSelector,
 					},
 				};
 			});
@@ -105,26 +64,106 @@ export default function useChart() {
 		[],
 	);
 
-	const changeFixedBarColor = useCallback((barKey: string, color: string) => {
-		setFixedChart((prev) => {
+	const changeRadarSelectColorMode = useCallback((color: 'fill' | 'stroke') => {
+		setChartState((prev) => {
 			return {
 				...prev,
-				barColor: {
-					...prev.barColor,
-					[barKey]: color,
+				defectReasonRadarChart: {
+					...prev.defectReasonRadarChart,
+					colorSelectorMode: color,
 				},
 			};
 		});
 	}, []);
 
+	const changeSelectedBarKey = useCallback((key: string, type: string) => {
+		setChartState((prev) => {
+			return {
+				...prev,
+				[type]: {
+					...prev[type as keyof typeof prev],
+					selectedBarKey: key,
+					isColorSelector: !prev[type as keyof typeof prev].isColorSelector,
+				},
+			};
+		});
+	}, []);
+
+	const changeBarSize = useCallback(
+		(
+			type: 'defectReasonChart' | 'defectReasonPieChart' | 'fixedRate',
+			size: number,
+		) => {
+			setChartState((prev) => {
+				return {
+					...prev,
+					[type]: {
+						...prev[type as keyof typeof prev],
+						barSize: size,
+					},
+				};
+			});
+		},
+		[],
+	);
+
+	const changeRadarOpacity = useCallback((value: number) => {
+		setChartState((prev) => {
+			return {
+				...prev,
+				defectReasonRadarChart: {
+					...prev.defectReasonRadarChart,
+					opacity: value,
+				},
+			};
+		});
+	}, []);
+
+	const changeCellColor = useCallback(
+		(
+			type:
+				| 'defectReasonChart'
+				| 'defectReasonPieChart'
+				| 'fixedChart'
+				| 'defectReasonRadarChart',
+			barKey: string,
+			color: string,
+		) => {
+			setChartState((prev) => {
+				if (type !== 'defectReasonRadarChart') {
+					return {
+						...prev,
+						[type]: {
+							...prev[type as keyof typeof prev],
+							barColor: {
+								...prev[type as keyof typeof prev].barColor,
+								[barKey]: color,
+							},
+						},
+					};
+				} else {
+					return {
+						...prev,
+						defectReasonRadarChart: {
+							...prev.defectReasonRadarChart,
+							fill: color,
+						},
+					};
+				}
+			});
+		},
+		[],
+	);
+
 	return {
-		changeDefectReasonBarColor,
-		defectReasonChart,
-		fixedChart,
+		changeCellColor,
+		chartState,
+		clearColorSelector,
 		toggleColorSelector,
 		changeSelectedBarKey,
-		changeFixedBarColor,
+		changeRadarOpacity,
 		changeBarSize,
+		changeRadarSelectColorMode,
 	};
 }
 
@@ -154,4 +193,43 @@ const initialBarColor = {
 	'재현되지 않음': '#fd4c4c',
 	이슈아님: '#fd4c4c',
 	기타: '#fd4c4c',
+};
+
+const initialBarColor2 = {
+	['장애']: '#fd4c4c',
+	['충돌']: '#777777',
+	['중요함']: '#ff2ec8',
+	['보통']: '#ff8833',
+	['사소함']: '#ff9393',
+};
+
+const initialRadarColor = {
+	fill: '#8884d8',
+	opacity: 0.5,
+	stroke: '#fff',
+};
+
+export const initialChartStateValues = {
+	defectReasonChart: {
+		isColorSelector: false,
+		barColor: initialBarColor2,
+		selectedBarKey: '',
+		barSize: 15,
+	} as DefectReasonState,
+	defectReasonPieChart: {
+		isColorSelector: false,
+		barColor: initialBarColor,
+		selectedBarKey: '',
+		barSize: 15,
+	} as DefectReasonState,
+	fixedChart: {
+		isColorSelector: false,
+		barColor: fixedBarColorSet,
+		selectedBarKey: 'all',
+		barSize: 30,
+	} as FixedChartState,
+	defectReasonRadarChart: {
+		...initialRadarColor,
+		isColorSelector: false,
+	} as RadarChartState,
 };

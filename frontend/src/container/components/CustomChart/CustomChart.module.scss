@@ -1,7 +1,7 @@
 .chartSettingModal {
   background-color: white;
   width: 220px;
-  height: 406px;
+  height: inherit;
   position: absolute;
   top: 50%;
   left: 50%;
@@ -13,3 +13,22 @@
     padding: 10px;
   }
 }
+
+// CustomLegend 스타일 추가
+.customLegend {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+
+  .fixedChartLegend {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .rectIcon {
+
+  }
+}
+
