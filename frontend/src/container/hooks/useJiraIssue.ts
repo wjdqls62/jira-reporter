@@ -9,9 +9,14 @@ import type { ISubIssue } from '../../api/models/Epic.ts';
 interface Props {
 	issueType: 'epic' | 'issues';
 	issueKey: string | string[];
+	checkListKey: string | null;
 }
 
-export default function useJiraIssue({ issueType, issueKey }: Props) {
+export default function useJiraIssue({
+	issueType,
+	issueKey,
+	checkListKey,
+}: Props) {
 	const {
 		data: epicData,
 		isLoading,
@@ -20,8 +25,52 @@ export default function useJiraIssue({ issueType, issueKey }: Props) {
 	} = useSWR<any, Error>(
 		issueType === 'epic'
 			? SWR_KEYS.inquiryEpicIssue(issueKey as string)
-			: SWR_KEYS.inquiryMultipleIssue(issueKey as string[]),
+			: SWR_KEYS.inquiryMultipleIssue(),
 		async (url: string) => {
+			let checkListRes;
+			if (checkListKey !== null && checkListKey !== '') {
+				checkListRes = await requestApi(
+					'POST',
+					SWR_KEYS.inquiryMultipleIssue(),
+					{
+						issueKeys: checkListKey,
+					},
+					{},
+				);
+			}
+			const checkListIssues =
+				checkListRes?.issues?.map((issue) => {
+					return {
+						id: issue.id,
+						key: issue.key,
+						parent: issue.fields.parent
+							? {
+									key: issue.fields.parent.key,
+									summary: issue.fields.parent.fields.summary,
+									status: issue.fields.parent.fields.status.name,
+								}
+							: null,
+						summary: issue.fields.summary,
+						versions: issue.fields.versions,
+						fixVersions: issue.fields.fixVersions,
+						assignee: issue.fields.assignee?.displayName || '',
+						status: issue.fields.status.name,
+						components: issue.fields.components,
+						reporter: issue.fields.reporter.displayName,
+						defectPriority: issue.fields.customfield_10044?.value || '',
+						priority: issue.fields.priority.name,
+						issueType: issue.fields.issuetype.name,
+						resolutions: issue.fields?.resolutions || '',
+						// 결함 원인
+						causeOfDetect:
+							issue.fields?.customfield_10042?.map((item) => item?.value) || [],
+						// 재발생
+						reopenVersions:
+							issue.fields?.customfield_10104?.map((version) => version.name) ||
+							[],
+					} as ISubIssue;
+				}) || [];
+
 			const res =
 				issueType === 'epic'
 					? await requestApi('GET', url, {}, {})
@@ -105,6 +154,7 @@ export default function useJiraIssue({ issueType, issueKey }: Props) {
 				improvements: improveIssues,
 				defects: sortedDefectsIssues,
 				excludeDefects: excludeIssues,
+				checkList: checkListIssues,
 			};
 		},
 		{

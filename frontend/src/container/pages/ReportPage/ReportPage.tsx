@@ -25,30 +25,35 @@ export default function ReportPage() {
 	const [issue, setIssue] = useState<{
 		type: 'epic' | 'issues' | null;
 		key: string | null;
+		checkList: string | null;
 	}>({
 		type: null,
 		key: null,
+		checkList: null,
 	});
 
 	const resetIssue = () => {
 		setIssue({
 			type: null,
 			key: null,
+			checkList: null,
 		});
 	};
 
-	const handleSubmitToken = (token, issueKey, issueType) => {
+	const handleSubmitToken = (token, issueKey, issueType, checkListKey) => {
 		setJira({
 			token: token,
 		});
 		setIssue({
 			type: issueType,
 			key: issueKey,
+			checkList: checkListKey,
 		});
 		navigate(issueType === 'epic' ? '/report/epic' : '/report/issues', {
 			state: {
 				issueType: issueType,
 				issueKey: issueKey,
+				checkListKey: checkListKey,
 			},
 		});
 	};
@@ -56,15 +61,20 @@ export default function ReportPage() {
 	if (!jira.token || !issue.type || !issue.key) {
 		return (
 			<AccessTokenInput
-				onSubmitToken={(token, issueKey, issueType) => {
+				onSubmitToken={(token, issueKey, issueType, checkListKey) => {
+					const checkListKeys =
+						checkListKey?.split(',').map((key) => key.trim()) || null;
+
 					if (issueType === 'epic') {
-						handleSubmitToken(token, issueKey, issueType);
+						handleSubmitToken(token, issueKey, issueType, checkListKeys);
 					} else if (issueType === 'issues') {
 						const issueKeys = issueKey.split(',');
+
 						handleSubmitToken(
 							token,
 							issueKeys.map((key) => key.trim()),
 							issueType,
+							checkListKeys,
 						);
 					}
 				}}

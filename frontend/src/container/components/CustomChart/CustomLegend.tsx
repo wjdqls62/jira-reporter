@@ -19,8 +19,6 @@ export const CustomLegend = (props: CustomLegendProps) => {
 	return (
 		<div className={styles.customLegend}>
 			{props.payload.map((legend) => {
-				console.log(`legend`, legend);
-
 				const getLabel = () => {
 					if (props.chartType === 'fixedChart') {
 						return legendLabelMap['fixedChart'][

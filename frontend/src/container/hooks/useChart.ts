@@ -78,7 +78,6 @@ export default function useChart() {
 
 	const changeSelectedBarKey = useCallback((key: string, type: string) => {
 		setChartState((prev) => {
-			console.log(`key: ${key}, type: ${type}`);
 			return {
 				...prev,
 				[type]: {

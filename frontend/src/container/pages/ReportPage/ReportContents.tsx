@@ -18,16 +18,19 @@ export default function ReportContents() {
 	const { epicData, mutate, isValidating, isLoading } = useJiraIssue({
 		issueKey: state.issueKey as string | string[],
 		issueType: state.issueType as 'epic' | 'issues',
+		checkListKey: state?.checkListKey || null,
 	});
 
 	const [data, setData] = useState<{
 		defects: ISubIssue[];
 		improvements: ISubIssue[];
 		excludeDefects: ISubIssue[];
+		checkList: ISubIssue[];
 	}>({
 		defects: [],
 		improvements: [],
 		excludeDefects: [],
+		checkList: [],
 	});
 	const { resetIssue } = useReportPage();
 
@@ -76,6 +79,18 @@ export default function ReportContents() {
 			data.defects.flatMap((issue) => issue.versions.map((ver) => ver.name)),
 		);
 
+		const issueCount = {
+			defects: data.defects.length,
+			improvements: data.improvements.length,
+			checkList: {
+				defect: data.checkList.filter((issue) => issue.issueType === '결함')
+					.length,
+				improvements: data.checkList.filter(
+					(issue) => issue.issueType === '개선',
+				).length,
+			},
+		};
+
 		const fixedIssueCount = {
 			defects: data.defects.filter(
 				(issue) => issue.status === '닫힘' || issue.status === '해결함',
@@ -83,6 +98,21 @@ export default function ReportContents() {
 			improvements: data.improvements.filter(
 				(issue) => issue.status === '닫힘' || issue.status === '해결함',
 			).length,
+			checkList: {
+				defect: data.checkList
+					.filter((issue) => issue.issueType === '결함')
+					.filter(
+						(issue) => issue.status === '닫힘' || issue.status === '해결함',
+					).length,
+				improvements: data.checkList
+					.filter(
+						(issue) =>
+							issue.issueType === '개선' || issue.issueType === '새 기능',
+					)
+					.filter(
+						(issue) => issue.status === '닫힘' || issue.status === '해결함',
+					).length,
+			},
 		};
 
 		const priorityCount = defectPriority.reduce(
@@ -98,6 +128,7 @@ export default function ReportContents() {
 		const hasReopenIssue = data.defects.some(
 			(issue) => issue.reopenVersions.length >= 1,
 		);
+		const hasCheckListIssue = data.checkList.some((issue) => issue);
 
 		const renderDefectReasonChart = () => {
 			if (chartTypes.defectReasonChart === 'bar') {
@@ -148,6 +179,38 @@ export default function ReportContents() {
 									<td />
 									<td>Working Day(n일)</td>
 								</tr>
+								{hasCheckListIssue && (
+									<>
+										<tr>
+											<td rowSpan={2}>확인 대상</td>
+											<td>결함 조치율</td>
+											<td>
+												{(() => {
+													const fixedRate =
+														(fixedIssueCount.checkList.defect /
+															issueCount.checkList.defect) *
+														100;
+													return `${fixedIssueCount.checkList.defect} / ${issueCount.checkList.defect} = ${fixedRate}%`;
+												})()}
+											</td>
+											<td>닫힘,해결 /전체</td>
+										</tr>
+										<tr>
+											<td>개선,새 기능 조치율</td>
+											<td>
+												{(() => {
+													const fixedRate =
+														(fixedIssueCount.checkList.improvements /
+															issueCount.checkList.improvements) *
+														100;
+													return `${fixedIssueCount.checkList.improvements} / ${issueCount.checkList.improvements} = ${isNaN(fixedRate) ? 0 : fixedRate}%`;
+												})()}
+											</td>
+											<td>닫힘,해결 /전체(개선,새기능)</td>
+										</tr>
+									</>
+								)}
+
 								<tr>
 									<td rowSpan={4}>QC 이슈</td>
 									<td>신규 등록 이슈</td>
@@ -195,7 +258,6 @@ export default function ReportContents() {
 																	)
 																	.flatMap((issue) => issue.key),
 															);
-															console.log(`reopenIssueKeys`, reopenIssueKeys);
 															return (
 																<>
 																	<div>{`재발생: ${reopenCount}건`}</div>
@@ -244,6 +306,41 @@ export default function ReportContents() {
 									</td>
 									<td />
 								</tr>
+								{hasCheckListIssue && (
+									<>
+										<tr>
+											<td rowSpan={2}>전체 이슈</td>
+											<td>결함 조치율</td>
+											<td>
+												{(() => {
+													const fixedRate =
+														((fixedIssueCount.defects +
+															fixedIssueCount.checkList.defect) /
+															(issueCount.defects +
+																issueCount.checkList.defect)) *
+														100;
+													return `${fixedIssueCount.defects + fixedIssueCount.checkList.defect} / ${issueCount.defects + issueCount.checkList.defect} = ${fixedRate}`;
+												})()}
+											</td>
+											<td>확인대상(결함,작업) + QC결함</td>
+										</tr>
+										<tr>
+											<td>개선 조치율</td>
+											<td>
+												{(() => {
+													const fixedRate =
+														((fixedIssueCount.improvements +
+															fixedIssueCount.checkList.improvements) /
+															(issueCount.improvements +
+																issueCount.checkList.improvements)) *
+														100;
+													return `${fixedIssueCount.improvements + fixedIssueCount.checkList.improvements} / ${issueCount.improvements + issueCount.checkList.improvements} = ${fixedRate}`;
+												})()}
+											</td>
+											<td>확인대상 + 신규 개선,새기능</td>
+										</tr>
+									</>
+								)}
 							</tbody>
 						</table>
 					</div>
@@ -396,6 +493,7 @@ export default function ReportContents() {
 				defects: epicData.defects,
 				improvements: epicData.improvements,
 				excludeDefects: epicData.excludeDefects,
+				checkList: epicData.checkList,
 			});
 		}
 	};

@@ -13,6 +13,7 @@ interface Props {
 		token: string,
 		issueKey: string,
 		issueType: 'epic' | 'issues',
+		checkListKey: string | null,
 	) => void;
 }
 
@@ -21,6 +22,8 @@ type FormValues = {
 	accessToken: string;
 	issueKey: string;
 	issueType: 'epic' | 'issues';
+	isCheckList: boolean;
+	checkListKey: string;
 };
 
 const defaultValues = {
@@ -28,38 +31,19 @@ const defaultValues = {
 	accessToken: localStorage.getItem('jiraToken') || '',
 	issueKey: '',
 	issueType: 'epic',
+	isCheckList: false,
+	checkListKey: '',
 };
 
 export default function AccessTokenInput({ onSubmitToken }: Props) {
-	/*const [inputValue, setInputValue] = useState<{
-		email: string;
-		accessToken: string;
-		issueKey: string;
-	}>({
-		email: localStorage.getItem('email') || '',
-		accessToken: localStorage.getItem('jiraToken') || '',
-		issueKey: '',
-	});*/
 	const [issueType, setIssueType] = useState<'epic' | 'issues'>('epic');
 	const methods = useForm<FormValues>({
 		defaultValues: defaultValues,
 	});
 	const { control, handleSubmit } = methods;
-	const { email, accessToken, issueKey } = useWatch({
+	const { email, accessToken, issueKey, checkListKey, isCheckList } = useWatch({
 		control: control,
 	});
-
-	/*const handleInputChange = (
-		type: 'email' | 'accessToken' | 'issueKey',
-		value: string,
-	) => {
-		setInputValue((prev) => {
-			return {
-				...prev,
-				[type]: value,
-			};
-		});
-	};*/
 
 	const handleIssueTypeChange = (value: 'epic' | 'issues') => {
 		setIssueType(value);
@@ -67,46 +51,35 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 
 	const onSubmit = async (formData: FormValues) => {
 		await axios
-			.post(`${baseUrl}${SWR_KEYS.validateToken}`, {}, {
-				headers: {
-					username: formData.email,
-					password: formData.accessToken,
-				}
-			})
+			.post(
+				`${baseUrl}${SWR_KEYS.validateToken}`,
+				{},
+				{
+					headers: {
+						username: formData.email,
+						password: formData.accessToken,
+					},
+				},
+			)
 			.then((res) => {
 				const { data } = res;
-				if(data.message === '인증이 성공했습니다.') {
+				if (data.message === '인증이 성공했습니다.') {
 					alert(data.message);
 					localStorage.setItem('email', formData.email);
 					localStorage.setItem('jiraToken', formData.accessToken);
-					onSubmitToken(formData.accessToken, formData.issueKey, issueType);
+
+					onSubmitToken(
+						formData.accessToken,
+						formData.issueKey,
+						issueType,
+						(checkListKey === '' ? null : checkListKey) as string | null,
+					);
 				}
 			})
 			.catch((error) => {
 				alert(error.response.data);
 			});
 	};
-
-	/*const submitToken = async () => {
-		await axios
-			.get(`${baseUrl}${SWR_KEYS.validateToken}`, {
-				auth: {
-					username: email,
-					password: accessToken,
-				},
-			})
-			.then((res) => {
-				if (res.data.emailAddress === email) {
-					alert('Success');
-					localStorage.setItem('email', email);
-					localStorage.setItem('jiraToken', accessToken);
-					onSubmitToken(accessToken, issueKey, issueType);
-				}
-			})
-			.catch((error) => {
-				alert(error.response.data);
-			});
-	};*/
 
 	return (
 		<FormProvider {...methods}>
@@ -189,6 +162,34 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 								rules={commonValidate({
 									required: true,
 								})}
+							/>
+						</div>
+						<div className={styles.labelWithField}>
+							<span className={styles.labelText}>
+								<Controller
+									render={({ field }) => (
+										<input
+											{...field}
+											type={'checkbox'}
+											checked={isCheckList}
+											onChange={(e) => field.onChange(e)}
+										/>
+									)}
+									name={'isCheckList'}
+								/>
+								확인 이슈
+							</span>
+							<Controller
+								render={({ field }) => (
+									<textarea
+										{...field}
+										placeholder={'Enter Issue-Key'}
+										disabled={!isCheckList}
+										value={checkListKey}
+										onChange={(e) => field.onChange(e)}
+									/>
+								)}
+								name={'checkListKey'}
 							/>
 						</div>
 						<button type={'submit'}>Submit</button>
