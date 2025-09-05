@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { useSnackbar } from 'notistack';
 import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
 
 import styles from './ReportPage.module.scss';
@@ -49,6 +50,8 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 		control: control,
 	});
 
+	const { enqueueSnackbar } = useSnackbar();
+
 	const handleIssueTypeChange = (value: 'epic' | 'issues') => {
 		setIssueType(value);
 	};
@@ -68,7 +71,11 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 			.then((res) => {
 				const { data } = res;
 				if (data.message === '인증이 성공했습니다.') {
-					alert(data.message);
+					enqueueSnackbar(data.message, {
+						variant: 'success',
+						autoHideDuration: 1500,
+						anchorOrigin: { vertical: 'bottom', horizontal: 'center' },
+					});
 					localStorage.setItem('email', formData.email);
 					localStorage.setItem('jiraToken', formData.accessToken);
 
