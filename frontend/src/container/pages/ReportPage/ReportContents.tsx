@@ -1,25 +1,19 @@
-import React, {
-	type ChangeEventHandler,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
-import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
-import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
-import { Avatar } from '@mui/material';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Tooltip } from '@mui/material';
+import { FiInfo } from 'react-icons/fi';
 import { HiOutlineRefresh } from 'react-icons/hi';
 import { MdLogout } from 'react-icons/md';
-import { useLocation } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 
 import styles from './ReportPage.module.scss';
 import { useReportPage } from './ReportPage.tsx';
+import { JIRA_BASE_BROWSE_URL } from '../../../constants/Common.ts';
 import { defectPriority } from '../../../constants/Issue.ts';
 import CustomChart from '../../components/CustomChart/CustomChart.tsx';
 import Header from '../../components/Header/Header.tsx';
 import Button from '../../components/UiTools/Button/Button.tsx';
 import Divider from '../../components/UiTools/Divider.tsx';
 import Loading from '../../components/UiTools/Loading.tsx';
-import { ChipTextField } from '../../components/UiTools/TextField/ChipTextField.tsx';
 import { Flex, Section } from '../../components/UiTools/UiTools.tsx';
 import useJiraIssue from '../../hooks/useJiraIssue.ts';
 
@@ -374,11 +368,15 @@ export default function ReportContents() {
 											<td align={'center'}>{index + 1}</td>
 											<td className={styles.issueTitle}>{issue.summary}</td>
 											<td className={styles.issueKey} align={'center'}>
-												{issue.key}
+												<NavLink
+													to={`${JIRA_BASE_BROWSE_URL}${issue.key}`}
+													target={'_blank'}>
+													{issue.key}
+												</NavLink>
 											</td>
 											<td align={'center'}>{issue.defectPriority}</td>
 											<td align={'center'}>{issue.status}</td>
-											<td className={styles.causeOfDetect}>
+											<td align={'center'} className={styles.causeOfDetect}>
 												{issue.causeOfDetect.map((issue) => issue).join(', ')}
 											</td>
 											<td align={'center'}>
@@ -396,11 +394,18 @@ export default function ReportContents() {
 				</Section>
 				<Section
 					title={(() => {
-						data.excludeDefects.map((item) => console.log(item.causeOfDetect));
 						return (
-							<div>
+							<Flex gap={6}>
 								<span>2-1. 집계 제외 이슈 (이슈 아님)</span>
-							</div>
+								<Tooltip
+									title={
+										'`이슈 아님`, `테스트 오류`, `재현되지 않음`  유형의 결함 이슈를 통계에서 제외합니다.'
+									}>
+									<div style={{ display: 'inline-flex', cursor: 'pointer' }}>
+										<FiInfo size={18} />
+									</div>
+								</Tooltip>
+							</Flex>
 						);
 					})()}>
 					<table border={1}>
@@ -412,7 +417,11 @@ export default function ReportContents() {
 										<td align={'center'}>{index + 1}</td>
 										<td>{issue.summary}</td>
 										<td className={styles.issueKey} align={'center'}>
-											{issue.key}
+											<NavLink
+												to={`${JIRA_BASE_BROWSE_URL}${issue.key}`}
+												target={'_blank'}>
+												{issue.key}
+											</NavLink>
 										</td>
 										<td align={'center'}>{issue.priority}</td>
 										<td align={'center'}>{issue.status}</td>
@@ -440,10 +449,23 @@ export default function ReportContents() {
 											<tr key={'reopenIssue'}>
 												<td align={'center'}>{index + 1}</td>
 												<td>{issue.summary}</td>
-												<td align={'center'}>{issue.key}</td>
+												<td align={'center'}>
+													<NavLink
+														to={`${JIRA_BASE_BROWSE_URL}${issue.key}`}
+														target={'_blank'}>
+														{issue.key}
+													</NavLink>
+												</td>
 												<td align={'center'}>{issue.priority}</td>
 												<td align={'center'}>{issue.status}</td>
-												<td>{issue.causeOfDetect.join(', ')}</td>
+												<td align={'center'}>
+													{issue.causeOfDetect.join(', ')}
+												</td>
+												<td align={'center'}>
+													{issue.reopenVersions
+														.map((version) => version)
+														.join(', ')}
+												</td>
 											</tr>
 										);
 									});
@@ -466,7 +488,13 @@ export default function ReportContents() {
 										<tr key={index}>
 											<td align={'center'}>{index + 1}</td>
 											<td>{issue.summary}</td>
-											<td align={'center'}>{issue.key}</td>
+											<td align={'center'}>
+												<NavLink
+													to={`${JIRA_BASE_BROWSE_URL}${issue.key}`}
+													target={'_blank'}>
+													{issue.key}
+												</NavLink>
+											</td>
 											<td align={'center'}>{issue.priority}</td>
 											<td align={'center'}>{issue.status}</td>
 											<td align={'center'}>
@@ -570,6 +598,7 @@ const IssueTableHeader = ({
 			<th>처리 상태</th>
 			{type !== 'improvements' && <th>결함 원인</th>}
 			{type !== 'excludeDefects' && type !== 'reopen' && <th>삭제</th>}
+			{type === 'reopen' && <th>재발생 버전</th>}
 		</thead>
 	);
 };
