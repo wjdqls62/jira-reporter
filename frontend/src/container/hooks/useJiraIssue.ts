@@ -82,7 +82,7 @@ export default function useJiraIssue({
 							},
 							{},
 						);
-			const excludeIssue = ['테스트 오류', '이슈아님'];
+			const excludeIssue = ['테스트 오류', '이슈아님', '재현되지 않음'];
 
 			const subIssues = res.issues.map((issue) => {
 				return {
@@ -108,7 +108,9 @@ export default function useJiraIssue({
 					resolutions: issue.fields?.resolutions || '',
 					// 결함 원인
 					causeOfDetect:
-						issue.fields?.customfield_10042?.map((item) => item?.value) || [],
+						issue.fields?.customfield_10042?.map((item) =>
+							item?.value?.trim(),
+						) || [],
 					// 재발생
 					reopenVersions:
 						issue.fields?.customfield_10104?.map((version) => version.name) ||
@@ -117,18 +119,20 @@ export default function useJiraIssue({
 			});
 
 			const improveIssues = subIssues.filter(
-				(issue) => issue.issueType === '개선' || issue.issueType === '새 기능',
+				(issue: ISubIssue) =>
+					issue.issueType === '개선' || issue.issueType === '새 기능',
 			);
 			const defectsIssues = subIssues
-				.filter((issue) => issue.issueType === '결함')
-				.filter((issue) =>
+				.filter((issue: ISubIssue) => issue.issueType === '결함')
+				.filter((issue: ISubIssue) =>
 					issue.causeOfDetect.every((item) => !excludeIssue.includes(item)),
 				);
 			const excludeIssues = subIssues
-				.filter((issue) => issue.issueType === '결함')
-				.filter((issue) =>
+				.filter((issue: ISubIssue) => issue.issueType === '결함')
+				.filter((issue: ISubIssue) =>
 					issue.causeOfDetect.some((item) => excludeIssue.includes(item)),
 				);
+			console.log(`excludeIssue`, excludeIssues);
 
 			// 정렬
 			//TODO 정렬 코드 개선 필요

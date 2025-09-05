@@ -1,0 +1,16 @@
+
+
+.headerContainer {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px;
+
+  .title {
+
+  }
+
+  .rightContent {
+    display: flex;
+    gap: 8px;
+  }
+}

@@ -6,6 +6,10 @@ import styles from './ReportPage.module.scss';
 import { baseUrl } from '../../../api/apiClient';
 import { SWR_KEYS } from '../../../api/swrKeys.ts';
 import { commonValidate } from '../../../validation/commonValidate.ts';
+import RadioButton, {
+	type LabelWithValue,
+} from '../../components/UiTools/RadioButton/RadioButton.tsx';
+import TextField from '../../components/UiTools/TextField/TextField.tsx';
 import { HelperText } from '../../components/UiTools/UiTools.tsx';
 
 interface Props {
@@ -85,15 +89,17 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 		<FormProvider {...methods}>
 			<form onSubmit={handleSubmit(onSubmit)}>
 				<div className={styles.tokenLayout}>
-					<h2>JIRA Token 입력</h2>
 					<div className={styles.inputContainer}>
+						<div className={styles.title}>
+							<h3>Jira 이슈 보고서 생성</h3>
+						</div>
 						<div className={styles.labelWithField}>
 							<Controller
 								render={({ field }) => (
 									<>
-										<span className={styles.labelText}>이메일</span>
-										<input
+										<TextField
 											{...field}
+											label={'이메일'}
 											id='email'
 											type='email'
 											placeholder='Enter Email'
@@ -115,8 +121,8 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 							<Controller
 								render={({ field }) => (
 									<>
-										<span className={styles.labelText}>토큰</span>
-										<input
+										<TextField
+											label={'Jira API 토큰'}
 											{...field}
 											id='accessToken'
 											type='password'
@@ -135,16 +141,19 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 							/>
 						</div>
 						<div className={styles.labelWithField}>
-							<span className={styles.labelText}>이슈 종류</span>
-							<select
-								onChange={(e) =>
-									handleIssueTypeChange(e.target.value as 'epic' | 'issues')
-								}>
-								<option value='epic'>큰틀(Epic)</option>
-								<option value={'issues'}>이슈</option>
-							</select>
+							<span className={styles.labelText}>조회 방식</span>
+							<RadioButton
+								labelWithValue={issueTypeDataSet}
+								onChange={(value) =>
+									handleIssueTypeChange(value as 'epic' | 'issues')
+								}
+								defaultValue={'epic'}
+							/>
 						</div>
-						<div>
+						<div className={styles.labelWithField}>
+							<div className={styles.labelText}>
+								{issueType === 'epic' ? '큰틀 키' : '결함 이슈 키들'}
+							</div>
 							<Controller
 								render={({ field }) => (
 									<>
@@ -192,10 +201,17 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 								name={'checkListKey'}
 							/>
 						</div>
-						<button type={'submit'}>Submit</button>
+						<button className={styles.submitButton} type={'submit'}>
+							조회
+						</button>
 					</div>
 				</div>
 			</form>
 		</FormProvider>
 	);
 }
+
+const issueTypeDataSet = [
+	{ label: '큰틀(Epic) 하위 이슈들', value: 'epic' },
+	{ label: '특정 결함 키들', value: 'issues' },
+] as LabelWithValue[];

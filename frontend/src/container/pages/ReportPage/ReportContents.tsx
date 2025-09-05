@@ -1,13 +1,25 @@
-import { type ChangeEventHandler, useEffect, useMemo, useState } from 'react';
+import React, {
+	type ChangeEventHandler,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
+import { Avatar } from '@mui/material';
+import { HiOutlineRefresh } from 'react-icons/hi';
+import { MdLogout } from 'react-icons/md';
 import { useLocation } from 'react-router-dom';
 
 import styles from './ReportPage.module.scss';
 import { useReportPage } from './ReportPage.tsx';
 import { defectPriority } from '../../../constants/Issue.ts';
 import CustomChart from '../../components/CustomChart/CustomChart.tsx';
+import Header from '../../components/Header/Header.tsx';
+import Button from '../../components/UiTools/Button/Button.tsx';
+import Divider from '../../components/UiTools/Divider.tsx';
 import Loading from '../../components/UiTools/Loading.tsx';
+import { ChipTextField } from '../../components/UiTools/TextField/ChipTextField.tsx';
 import { Flex, Section } from '../../components/UiTools/UiTools.tsx';
 import useJiraIssue from '../../hooks/useJiraIssue.ts';
 
@@ -345,7 +357,12 @@ export default function ReportContents() {
 						</table>
 					</div>
 				</Section>
-				<Section title={'2. 주요 결함 내역'}>
+				<Section
+					title={
+						<>
+							<span>2. 주요 결함 내역</span>
+						</>
+					}>
 					<table border={1}>
 						<IssueTableHeader />
 						<tbody>
@@ -377,7 +394,15 @@ export default function ReportContents() {
 						</tbody>
 					</table>
 				</Section>
-				<Section title={'2-1. 집계 제외 이슈 (이슈 아님)'}>
+				<Section
+					title={(() => {
+						data.excludeDefects.map((item) => console.log(item.causeOfDetect));
+						return (
+							<div>
+								<span>2-1. 집계 제외 이슈 (이슈 아님)</span>
+							</div>
+						);
+					})()}>
 					<table border={1}>
 						<IssueTableHeader type={'excludeDefects'} />
 						<tbody>
@@ -507,26 +532,30 @@ export default function ReportContents() {
 	}
 
 	return (
-		<>
-			<div className={styles.reportContentsLayout}>{memoizedReportDetails}</div>
-			<div className={styles.footer}>
-				<div className={styles.refresh}>
-					<RefreshRoundedIcon {...iconProps} onClick={() => handleRefresh()} />
-				</div>
-				<div className={styles.home}>
-					<HomeRoundedIcon {...iconProps} onClick={() => handleGoHome()} />
-				</div>
+		<div className={styles.reportContainer}>
+			<div>
+				<Divider align={'horizontal'} color={'#a1a1a1'} />
+				<Header>
+					<>
+						<Button
+							label={'새로고침'}
+							icon={<HiOutlineRefresh size={14} />}
+							onClick={() => handleRefresh()}
+						/>
+						<Button
+							label={'로그아웃'}
+							icon={<MdLogout size={14} />}
+							onClick={() => handleGoHome()}
+						/>
+					</>
+				</Header>
+				<Divider align={'horizontal'} color={'#a1a1a1'} />
 			</div>
-		</>
+
+			<div className={styles.reportContentsLayout}>{memoizedReportDetails}</div>
+		</div>
 	);
 }
-
-const iconProps = {
-	sx: { fontSize: 40 },
-	cursor: 'pointer',
-	color: 'primary',
-};
-
 const IssueTableHeader = ({
 	type = 'defect',
 }: {
