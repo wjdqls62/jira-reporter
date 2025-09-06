@@ -146,14 +146,23 @@ app.post('/api/issues/search', async (req, res) => {
     }
 
     const authHeader = createAuthHeader(username, password);
-    const jql = `issueKey in (${issueKeys.join(', ')})`;
-    const url = `${JIRA_BASE_URL}/rest/api/3/search?maxResults=${maxResults}&jql=${encodeURIComponent(jql)}`;
-    
-    const searchData = await makeJiraRequest(url, authHeader);
-    
+    const url = `${JIRA_BASE_URL}/rest/api/3/search/jql`
+    const body = {
+      "jql": `issueKey IN (${issueKeys.join(', ')})`,
+      "fields": ["*all"],
+      "maxResults": maxResults,
+    }
+    const searchData = await axios.post(url, body, {
+      headers: {
+        'Authorization': authHeader,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
+
     res.json({
       success: true,
-      data: searchData
+      data: searchData.data
     });
   } catch (error) {
     console.error('API 에러:', error.message);
