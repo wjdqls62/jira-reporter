@@ -260,6 +260,7 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 				<ComposedChart data={mappedData}>
 					<CartesianGrid strokeDasharray={'3 3'} />
 					<XAxis dataKey={'type'} />
+					<YAxis />
 					<YAxis
 						yAxisId={'right'}
 						orientation={'right'}
