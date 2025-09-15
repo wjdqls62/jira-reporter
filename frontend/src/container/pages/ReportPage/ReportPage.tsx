@@ -63,7 +63,10 @@ export default function ReportPage() {
 			<AccessTokenInput
 				onSubmitToken={(token, issueKey, issueType, checkListKey) => {
 					const checkListKeys =
-						checkListKey?.split(',').map((key) => key.trim()) || null;
+						checkListKey
+							?.split(',')
+							.map((key) => key.trim())
+							.filter((key) => key !== '') || null;
 
 					if (issueType === 'epic') {
 						handleSubmitToken(token, issueKey, issueType, checkListKeys);

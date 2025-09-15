@@ -92,7 +92,11 @@ export default function ReportContents() {
 				defect: data.checkList.filter((issue) => issue.issueType === '결함')
 					.length,
 				improvements: data.checkList.filter(
-					(issue) => issue.issueType === '개선',
+					(issue) =>
+						issue.issueType === '개선' || issue.issueType === '새 기능',
+				).length,
+				works: data.checkList.filter(
+					(issue) => issue.issueType === '작업' || issue.issueType === '부작업',
 				).length,
 			},
 		};
@@ -114,6 +118,14 @@ export default function ReportContents() {
 					.filter(
 						(issue) =>
 							issue.issueType === '개선' || issue.issueType === '새 기능',
+					)
+					.filter(
+						(issue) => issue.status === '닫힘' || issue.status === '해결함',
+					).length,
+				works: data.checkList
+					.filter(
+						(issue) =>
+							issue.issueType === '작업' || issue.issueType === '부작업',
 					)
 					.filter(
 						(issue) => issue.status === '닫힘' || issue.status === '해결함',
@@ -188,7 +200,7 @@ export default function ReportContents() {
 								{hasCheckListIssue && (
 									<>
 										<tr>
-											<td rowSpan={2}>확인 대상</td>
+											<td rowSpan={3}>확인 대상</td>
 											<td>결함 조치율</td>
 											<td>
 												{(() => {
@@ -214,6 +226,23 @@ export default function ReportContents() {
 											</td>
 											<td>닫힘,해결 /전체(개선,새기능)</td>
 										</tr>
+										{(() => {
+											if (issueCount.checkList.works >= 1) {
+												const fixedRate =
+													(fixedIssueCount.checkList.works /
+														issueCount.checkList.works) *
+													100;
+												return (
+													<tr>
+														<td>작업, 부작업 조치율</td>
+														<td>
+															{`${fixedIssueCount.checkList.works} / ${issueCount.checkList.works} = ${isNaN(fixedRate) ? 0 : fixedRate}%`}
+														</td>
+														<td>닫힘,해결 /전체(작업, 부작업)</td>
+													</tr>
+												);
+											}
+										})()}
 									</>
 								)}
 
