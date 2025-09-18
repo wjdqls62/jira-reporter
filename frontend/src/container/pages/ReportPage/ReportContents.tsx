@@ -208,7 +208,7 @@ export default function ReportContents() {
 														(fixedIssueCount.checkList.defect /
 															issueCount.checkList.defect) *
 														100;
-													return `${fixedIssueCount.checkList.defect} / ${issueCount.checkList.defect} = ${fixedRate}%`;
+													return `${fixedIssueCount.checkList.defect} / ${issueCount.checkList.defect} = ${isNaN(fixedRate) ? 0 : fixedRate.toFixed(2)}%`;
 												})()}
 											</td>
 											<td>닫힘,해결 /전체</td>
@@ -221,7 +221,7 @@ export default function ReportContents() {
 														(fixedIssueCount.checkList.improvements /
 															issueCount.checkList.improvements) *
 														100;
-													return `${fixedIssueCount.checkList.improvements} / ${issueCount.checkList.improvements} = ${isNaN(fixedRate) ? 0 : fixedRate}%`;
+													return `${fixedIssueCount.checkList.improvements} / ${issueCount.checkList.improvements} = ${isNaN(fixedRate) ? 0 : fixedRate.toFixed(2)}%`;
 												})()}
 											</td>
 											<td>닫힘,해결 /전체(개선,새기능)</td>
@@ -354,7 +354,7 @@ export default function ReportContents() {
 															(issueCount.defects +
 																issueCount.checkList.defect)) *
 														100;
-													return `${fixedIssueCount.defects + fixedIssueCount.checkList.defect} / ${issueCount.defects + issueCount.checkList.defect} = ${fixedRate}`;
+													return `${fixedIssueCount.defects + fixedIssueCount.checkList.defect} / ${issueCount.defects + issueCount.checkList.defect} = ${isNaN(fixedRate) ? 0 : fixedRate.toFixed(2)}%`;
 												})()}
 											</td>
 											<td>확인대상(결함,작업) + QC결함</td>
@@ -369,7 +369,10 @@ export default function ReportContents() {
 															(issueCount.improvements +
 																issueCount.checkList.improvements)) *
 														100;
-													return `${fixedIssueCount.improvements + fixedIssueCount.checkList.improvements} / ${issueCount.improvements + issueCount.checkList.improvements} = ${fixedRate}`;
+													return `${fixedIssueCount.improvements + fixedIssueCount.checkList.improvements} / ${
+														issueCount.improvements +
+														issueCount.checkList.improvements
+													} = ${isNaN(fixedRate) ? 0 : fixedRate.toFixed(2)}%`;
 												})()}
 											</td>
 											<td>확인대상 + 신규 개선,새기능</td>
