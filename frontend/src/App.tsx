@@ -4,6 +4,7 @@ import Loading from './container/components/UiTools/Loading.tsx';
 import Layout from './container/layout/Layout.tsx';
 import ReportContents from './container/pages/ReportPage/ReportContents.tsx';
 import ReportPage from './container/pages/ReportPage/ReportPage.tsx';
+import ErrorPage from './container/components/ErrorPage/ErrorPage.tsx';
 
 function App() {
 	const router = createBrowserRouter([
@@ -18,6 +19,7 @@ function App() {
 						{
 							path: ':issueType',
 							element: <ReportContents />,
+							errorElement: <ErrorPage />,
 						},
 					],
 				},
