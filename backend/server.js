@@ -104,7 +104,7 @@ app.get('/api/issue/:issueKey', async (req, res) => {
   } catch (error) {
     console.error('API 에러:', error.message);
     console.error('에러 스택:', error.stack);
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       error: error.message,
       debug: process.env.NODE_ENV === 'development' ? error.stack : undefined
@@ -167,7 +167,7 @@ app.post('/api/issues/search', async (req, res) => {
   } catch (error) {
     console.error('API 에러:', error.message);
     console.error('에러 스택:', error.stack);
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       error: error.message,
       debug: process.env.NODE_ENV === 'development' ? error.stack : undefined
