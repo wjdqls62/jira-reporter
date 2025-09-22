@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Tooltip } from '@mui/material';
+import { enqueueSnackbar } from 'notistack';
 import { FiInfo } from 'react-icons/fi';
 import { HiOutlineRefresh } from 'react-icons/hi';
 import { MdLogout } from 'react-icons/md';
@@ -200,7 +201,9 @@ export default function ReportContents() {
 								{hasCheckListIssue && (
 									<>
 										<tr>
-											<td rowSpan={3}>확인 대상</td>
+											<td rowSpan={issueCount.checkList.works >= 1 ? 3 : 2}>
+												확인 대상
+											</td>
 											<td>결함 조치율</td>
 											<td>
 												{(() => {
@@ -245,7 +248,6 @@ export default function ReportContents() {
 										})()}
 									</>
 								)}
-
 								<tr>
 									<td rowSpan={4}>QC 이슈</td>
 									<td>신규 등록 이슈</td>
@@ -585,6 +587,15 @@ export default function ReportContents() {
 
 	useEffect(() => {
 		initialDate(epicData);
+
+		if (state.checkListKey !== null && epicData.checkList.length === 0) {
+			enqueueSnackbar('확인 이슈 검색 결과가 없습니다.', {
+				variant: 'warning',
+				autoHideDuration: 3000,
+				preventDuplicate: true,
+				anchorOrigin: { vertical: 'bottom', horizontal: 'center' },
+			});
+		}
 	}, [epicData]);
 
 	if (isValidating) {
