@@ -232,7 +232,7 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 			);
 		},
 		fixedChart: () => {
-			const dataKeys = ['충돌', '장애', '중요함', '보통', '개선', '새 기능'];
+			const dataKeys = ['충돌', '장애', '중요함', '보통','사소함', '개선', '새 기능'];
 			const filteredData = Object.entries(dataKeys).reduce(
 				(acc, [key, value]) => {
 					if (value === '개선' || value === '새 기능') {
