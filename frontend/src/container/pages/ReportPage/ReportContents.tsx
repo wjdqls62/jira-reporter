@@ -325,9 +325,9 @@ export default function ReportContents() {
 											),
 										)
 											? 0
-											: (fixedIssueCount.improvements /
+											: Number((fixedIssueCount.improvements /
 													data.improvements.length) *
-												100
+												100).toFixed(2)
 									}%`}</td>
 									<td>닫힘, 해결(개선,새기능)/ 신규(개선,새기능)</td>
 								</tr>
