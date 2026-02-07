@@ -144,9 +144,20 @@ export default function ReportContents() {
 			{} as Record<string, number>,
 		);
 
-		const hasReopenIssue = data.defects.some(
-			(issue) => issue.reopenVersions.length >= 1,
-		);
+		// 재발생 여부
+		const hasReopenIssue = {
+			defects: data.defects.some((issue) => issue.reopenVersions.length >= 1),
+			improvements: data.improvements.some(
+				(issue) => issue.reopenVersions.length >= 1,
+			),
+			checkListDefects: data.checkList
+				.filter((issue) => issue.issueType === '결함')
+				.some((issue) => issue.reopenVersions.length >= 1),
+			checkListImprovements: data.checkList
+				.filter((issue) => issue.issueType === '개선')
+				.some((issue) => issue.reopenVersions.length >= 1),
+		};
+
 		const hasCheckListIssue = data.checkList.some((issue) => issue);
 
 		const renderDefectReasonChart = () => {
@@ -249,7 +260,7 @@ export default function ReportContents() {
 									</>
 								)}
 								<tr>
-									<td rowSpan={4}>QC 이슈</td>
+									<td rowSpan={5}>QC 이슈</td>
 									<td>신규 등록 이슈</td>
 									<td>{`${data.defects.length + data.improvements.length}건`}</td>
 									<td>
@@ -258,14 +269,16 @@ export default function ReportContents() {
 									</td>
 								</tr>
 								{(() => {
-									const hasReopenIssue = data.defects.some(
+									/*const hasReopenIssue = data.defects.some(
 										(issue) => issue.reopenVersions.length >= 1,
-									);
+									);*/
 									return (
 										<>
 											<tr>
-												<td rowSpan={hasReopenIssue ? 2 : 1}>결함 조치율</td>
-												<td rowSpan={hasReopenIssue ? 2 : 1}>
+												<td rowSpan={hasReopenIssue.defects ? 2 : 1}>
+													결함 조치율
+												</td>
+												<td rowSpan={hasReopenIssue.defects ? 2 : 1}>
 													{`${fixedIssueCount.defects} / ${data.defects.length} = ${
 														isNaN(
 															(fixedIssueCount.defects / data.defects.length) *
@@ -281,7 +294,7 @@ export default function ReportContents() {
 												</td>
 												<td>닫힘, 해결 결함/신규 결함</td>
 											</tr>
-											{hasReopenIssue && (
+											{hasReopenIssue.defects && (
 												<tr>
 													<td>
 														{(() => {
@@ -313,8 +326,13 @@ export default function ReportContents() {
 									);
 								})()}
 								<tr>
-									<td>개선,새기능 조치율</td>
-									<td>{`${fixedIssueCount.improvements} / ${data.improvements.length} = ${
+									<td rowSpan={hasReopenIssue.improvements ? 2 : 1}>
+										개선,새기능 조치율
+									</td>
+									<td
+										rowSpan={
+											hasReopenIssue.improvements ? 2 : 1
+										}>{`${fixedIssueCount.improvements} / ${data.improvements.length} = ${
 										isNaN(
 											Number(
 												(
@@ -325,12 +343,38 @@ export default function ReportContents() {
 											),
 										)
 											? 0
-											: Number((fixedIssueCount.improvements /
-													data.improvements.length) *
-												100).toFixed(2)
+											: Number(
+													(fixedIssueCount.improvements /
+														data.improvements.length) *
+														100,
+												).toFixed(2)
 									}%`}</td>
 									<td>닫힘, 해결(개선,새기능)/ 신규(개선,새기능)</td>
 								</tr>
+								{(() => {
+									const reopenCount = data.improvements.filter(
+										(issue) => issue.reopenVersions.length >= 1,
+									);
+									const reopenImprovementsKeys = new Set(
+										data.improvements
+											.filter((issue) => issue.reopenVersions.length >= 1)
+											.flatMap((issue) => issue.key),
+									);
+									return (
+										hasReopenIssue.improvements && (
+											<tr>
+												<td>
+													<div>재발생: {`${reopenCount.length}개`}</div>
+													<div>
+														{`(${Array.from(reopenImprovementsKeys)
+															.map((issue) => issue)
+															.join(', ')})`}
+													</div>
+												</td>
+											</tr>
+										)
+									);
+								})()}
 								<tr>
 									<td>결함 심각도별 분포(유효한 결함 분석)</td>
 									<td>
@@ -466,43 +510,95 @@ export default function ReportContents() {
 						</tbody>
 					</table>
 				</Section>
-				{hasReopenIssue && (
-					<Section title={'2-2. 재발생 이슈'}>
+				{(hasReopenIssue.defects || hasReopenIssue.improvements) && (
+					<Section title={'2-2. 재발생 이슈 (QC 이슈)'}>
 						<table border={1}>
 							<IssueTableHeader type={'reopen'} />
 							<tbody>
 								{(() => {
-									const reopenIssues = new Set(
-										data.defects.filter(
+									const combinedReopenIssues = new Set([
+										...data.defects.filter(
 											(issue) => issue.reopenVersions.length >= 1,
 										),
-									);
+										...data.improvements.filter(
+											(issue) => issue.reopenVersions.length >= 1,
+										),
+									]);
 
-									return Array.from(reopenIssues).map((issue, index) => {
-										return (
-											<tr key={'reopenIssue'}>
-												<td align={'center'}>{index + 1}</td>
-												<td>{issue.summary}</td>
-												<td align={'center'}>
-													<NavLink
-														to={`${JIRA_BASE_BROWSE_URL}${issue.key}`}
-														target={'_blank'}>
-														{issue.key}
-													</NavLink>
-												</td>
-												<td align={'center'}>{issue.priority}</td>
-												<td align={'center'}>{issue.status}</td>
-												<td align={'center'}>
-													{issue.causeOfDetect.join(', ')}
-												</td>
-												<td align={'center'}>
-													{issue.reopenVersions
-														.map((version) => version)
-														.join(', ')}
-												</td>
-											</tr>
-										);
-									});
+									return Array.from(combinedReopenIssues).map(
+										(issue, index) => {
+											return (
+												<tr key={'reopenIssue'}>
+													<td align={'center'}>{index + 1}</td>
+													<td align={'center'}>{issue.issueType}</td>
+													<td>{issue.summary}</td>
+													<td align={'center'}>
+														<NavLink
+															to={`${JIRA_BASE_BROWSE_URL}${issue.key}`}
+															target={'_blank'}>
+															{issue.key}
+														</NavLink>
+													</td>
+													<td align={'center'}>{issue.priority}</td>
+													<td align={'center'}>{issue.status}</td>
+													<td align={'center'}>
+														{issue.causeOfDetect.join(', ')}
+													</td>
+													<td align={'center'}>
+														{issue.reopenVersions
+															.map((version) => version)
+															.join(', ')}
+													</td>
+												</tr>
+											);
+										},
+									);
+								})()}
+							</tbody>
+						</table>
+					</Section>
+				)}
+				{(hasReopenIssue.checkListDefects ||
+					hasReopenIssue.checkListImprovements) && (
+					<Section title={'2-3. 재발생 이슈 (확인 이슈)'}>
+						<table border={1}>
+							<IssueTableHeader type={'reopen'} />
+							<tbody>
+								{(() => {
+									const combinedReopenCheckListIssues = new Set([
+										...data.checkList.filter(
+											(issue) => issue.reopenVersions.length >= 1,
+										),
+									]);
+
+									return Array.from(combinedReopenCheckListIssues).map(
+										(issue, index) => {
+											return (
+												<tr key={'reopenIssue'}>
+													<td align={'center'}>{index + 1}</td>
+													<td align={'center'}>{issue.issueType}</td>
+													<td>{issue.summary}</td>
+													<td align={'center'}>
+														<NavLink
+															to={`${JIRA_BASE_BROWSE_URL}${issue.key}`}
+															target={'_blank'}>
+															{issue.key}
+														</NavLink>
+													</td>
+													<td align={'center'}>{issue.priority}</td>
+													<td align={'center'}>{issue.status}</td>
+													<td align={'center'}>
+														{issue.causeOfDetect.join(', ')}
+													</td>
+													<td align={'center'}>
+														{issue.reopenVersions
+															.map((version) => version)
+															.join(', ')}
+													</td>
+												</tr>
+											);
+										},
+									);
 								})()}
 							</tbody>
 						</table>
@@ -635,6 +731,7 @@ const IssueTableHeader = ({
 	return (
 		<thead>
 			<th>번호</th>
+			{type === 'reopen' && <th>이슈 구분</th>}
 			<th>설명</th>
 			<th>키</th>
 			<th>심각도</th>
