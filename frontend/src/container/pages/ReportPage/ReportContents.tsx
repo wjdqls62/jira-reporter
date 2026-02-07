@@ -260,7 +260,7 @@ export default function ReportContents() {
 									</>
 								)}
 								<tr>
-									<td rowSpan={5}>QC 이슈</td>
+									<td rowSpan={10}>QC 이슈</td>
 									<td>신규 등록 이슈</td>
 									<td>{`${data.defects.length + data.improvements.length}건`}</td>
 									<td>
