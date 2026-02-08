@@ -522,7 +522,7 @@ export default function ReportContents() {
 												return `${fixedIssueCount.defects + fixedIssueCount.checkList.defect} / ${issueCount.defects + issueCount.checkList.defect} = ${isNaN(fixedRate) ? 0 : fixedRate.toFixed(2)}%`;
 											})()}
 										</td>
-										<td>확인대상(결함,작업) + QC결함</td>
+										<td>확인대상(결함) + QC결함</td>
 									</tr>
 								)}
 								{hasCheckListIssue && (
