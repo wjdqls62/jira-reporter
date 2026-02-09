@@ -146,23 +146,45 @@ app.post('/api/issues/search', async (req, res) => {
     }
 
     const authHeader = createAuthHeader(username, password);
-    const url = `${JIRA_BASE_URL}/rest/api/3/search/jql`
-    const body = {
-      "jql": `issueKey IN (${issueKeys.join(', ')})`,
-      "fields": ["*all"],
-      "maxResults": maxResults,
+    const url = `${JIRA_BASE_URL}/rest/api/3/search/jql`;
+    
+    // JIRA API 최대 100개 제한으로 인한 페이지네이션 처리
+    const JIRA_MAX_RESULTS = 100;
+    let allIssues = [];
+    let totalResults = 0;
+    
+    // issueKeys를 100개씩 나누어 처리
+    for (let i = 0; i < issueKeys.length; i += JIRA_MAX_RESULTS) {
+      const batchKeys = issueKeys.slice(i, i + JIRA_MAX_RESULTS);
+      
+      const body = {
+        "jql": `issueKey IN (${batchKeys.join(', ')})`,
+        "fields": ["*all"],
+        "maxResults": JIRA_MAX_RESULTS,
+      };
+      
+      const searchData = await axios.post(url, body, {
+        headers: {
+          'Authorization': authHeader,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // 결과 병합
+      allIssues = allIssues.concat(searchData.data.issues || []);
+      totalResults += searchData.data.total || 0;
     }
-    const searchData = await axios.post(url, body, {
-      headers: {
-        'Authorization': authHeader,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      }
-    });
 
     res.json({
       success: true,
-      data: searchData.data
+      data: {
+        issues: allIssues,
+        total: allIssues.length,
+        maxResults: allIssues.length,
+        startAt: 0,
+        isLast: true
+      }
     });
   } catch (error) {
     console.error('API 에러:', error.message);

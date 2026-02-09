@@ -795,11 +795,19 @@ export default function ReportContents() {
 
 	const initialDate = (epicData) => {
 		if (epicData) {
+			// (부작업)개선, (부작업)결함, (부작업)새 기능에서 `(부작업)` 문자열 제거
+			const convertChecklist = epicData.checkList.map((issue) => {
+				return {
+					...issue,
+					issueType: issue.issueType.replace(/^\(부작업\)/, ''),
+				};
+			});
+
 			setData({
 				defects: epicData.defects,
 				improvements: epicData.improvements,
 				excludeDefects: epicData.excludeDefects,
-				checkList: epicData.checkList,
+				checkList: convertChecklist,
 			});
 		}
 	};
