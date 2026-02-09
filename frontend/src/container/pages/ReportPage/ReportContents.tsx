@@ -5,7 +5,6 @@ import { FiInfo } from 'react-icons/fi';
 import { HiOutlineRefresh } from 'react-icons/hi';
 import { MdLogout } from 'react-icons/md';
 import { NavLink, useLocation } from 'react-router-dom';
-
 import styles from './ReportPage.module.scss';
 import { useReportPage } from './ReportPage.tsx';
 import { JIRA_BASE_BROWSE_URL } from '../../../constants/Common.ts';
@@ -17,8 +16,8 @@ import Divider from '../../components/UiTools/Divider.tsx';
 import Loading from '../../components/UiTools/Loading.tsx';
 import { Flex, Section } from '../../components/UiTools/UiTools.tsx';
 import useJiraIssue from '../../hooks/useJiraIssue.ts';
-
 import type { ISubIssue } from '../../../api/models/Epic.ts';
+import useReportCalculator from '../../hooks/useReportCalculator.ts';
 
 export default function ReportContents() {
 	const { state } = useLocation();
@@ -27,6 +26,15 @@ export default function ReportContents() {
 		issueType: state.issueType as 'epic' | 'issues',
 		checkListKey: state?.checkListKey || null,
 	});
+
+	const {
+		hasCheckListIssue,
+		hasReopenIssue,
+		fixedIssueCount,
+		priorityCount,
+		issueCount,
+		version: versions,
+	} = useReportCalculator(epicData);
 
 	const [data, setData] = useState<{
 		defects: ISubIssue[];
@@ -81,118 +89,35 @@ export default function ReportContents() {
 		});
 	};
 
+	const renderDefectReasonChart = () => {
+		if (chartTypes.defectReasonChart === 'bar') {
+			return (
+				<CustomChart
+					data={data.defects}
+					dataKey={'causeOfDetect'}
+					type={'defectReasonChart'}
+				/>
+			);
+		} else if (chartTypes.defectReasonChart === 'pie') {
+			return (
+				<CustomChart
+					data={data.defects}
+					dataKey={'causeOfDetect'}
+					type={'defectReasonPieChart'}
+				/>
+			);
+		} else if (chartTypes.defectReasonChart === 'radar') {
+			return (
+				<CustomChart
+					data={data.defects}
+					dataKey={'causeOfDetect'}
+					type={'defectReasonRadarChart'}
+				/>
+			);
+		}
+	};
+
 	const memoizedReportDetails = useMemo(() => {
-		const versions = new Set(
-			data.defects.flatMap((issue) => issue.versions.map((ver) => ver.name)),
-		);
-
-		const issueCount = {
-			defects: data.defects.length,
-			improvements: data.improvements.length,
-			checkList: {
-				defect: data.checkList.filter((issue) => issue.issueType === '결함')
-					.length,
-				improvements: data.checkList.filter(
-					(issue) =>
-						issue.issueType === '개선' || issue.issueType === '새 기능',
-				).length,
-				works: data.checkList.filter(
-					(issue) => issue.issueType === '작업' || issue.issueType === '부작업',
-				).length,
-			},
-		};
-
-		const fixedIssueCount = {
-			defects: data.defects.filter(
-				(issue) => issue.status === '닫힘' || issue.status === '해결함',
-			).length,
-			improvements: data.improvements.filter(
-				(issue) => issue.status === '닫힘' || issue.status === '해결함',
-			).length,
-			checkList: {
-				defect: data.checkList
-					.filter((issue) => issue.issueType === '결함')
-					.filter(
-						(issue) => issue.status === '닫힘' || issue.status === '해결함',
-					).length,
-				improvements: data.checkList
-					.filter(
-						(issue) =>
-							issue.issueType === '개선' || issue.issueType === '새 기능',
-					)
-					.filter(
-						(issue) => issue.status === '닫힘' || issue.status === '해결함',
-					).length,
-				works: data.checkList
-					.filter(
-						(issue) =>
-							issue.issueType === '작업' || issue.issueType === '부작업',
-					)
-					.filter(
-						(issue) => issue.status === '닫힘' || issue.status === '해결함',
-					).length,
-			},
-		};
-
-		const priorityCount = defectPriority.reduce(
-			(acc, type) => {
-				acc[type] = data.defects.filter(
-					(issue) => issue.defectPriority === type,
-				).length;
-				return acc;
-			},
-			{} as Record<string, number>,
-		);
-
-		// 재발생 여부
-		const hasReopenIssue = {
-			defects: data.defects.some((issue) => issue.reopenVersions.length >= 1),
-			improvements: data.improvements.some(
-				(issue) => issue.reopenVersions.length >= 1,
-			),
-			checkListDefects: data.checkList
-				.filter((issue) => issue.issueType === '결함')
-				.some((issue) => issue.reopenVersions.length >= 1),
-			checkListImprovements: data.checkList
-				.filter((issue) => issue.issueType === '개선')
-				.some((issue) => issue.reopenVersions.length >= 1),
-			checkListWorks: data.checkList
-				.filter(
-					(issue) => issue.issueType === '작업' || issue.issueType === '부작업',
-				)
-				.some((issue) => issue.reopenVersions.length >= 1),
-		};
-
-		const hasCheckListIssue = data.checkList.some((issue) => issue);
-
-		const renderDefectReasonChart = () => {
-			if (chartTypes.defectReasonChart === 'bar') {
-				return (
-					<CustomChart
-						data={data.defects}
-						dataKey={'causeOfDetect'}
-						type={'defectReasonChart'}
-					/>
-				);
-			} else if (chartTypes.defectReasonChart === 'pie') {
-				return (
-					<CustomChart
-						data={data.defects}
-						dataKey={'causeOfDetect'}
-						type={'defectReasonPieChart'}
-					/>
-				);
-			} else if (chartTypes.defectReasonChart === 'radar') {
-				return (
-					<CustomChart
-						data={data.defects}
-						dataKey={'causeOfDetect'}
-						type={'defectReasonRadarChart'}
-					/>
-				);
-			}
-		};
-
 		return (
 			<Flex flexDirection={'column'} gap={50}>
 				<Section title={'1. 테스트 요약'}>
