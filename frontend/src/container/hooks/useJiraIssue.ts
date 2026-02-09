@@ -132,7 +132,6 @@ export default function useJiraIssue({
 				.filter((issue: ISubIssue) =>
 					issue.causeOfDetect.some((item) => excludeIssue.includes(item)),
 				);
-			console.log(`excludeIssue`, excludeIssues);
 
 			// 정렬
 			//TODO 정렬 코드 개선 필요

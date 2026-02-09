@@ -18,7 +18,7 @@ interface LegendIconProps {
 export const CustomLegend = (props: CustomLegendProps) => {
 	return (
 		<div className={styles.customLegend}>
-			{props.payload.map((legend) => {
+			{props.payload.map((legend, index) => {
 				const getLabel = () => {
 					if (props.chartType === 'fixedChart') {
 						return legendLabelMap['fixedChart'][
@@ -30,7 +30,9 @@ export const CustomLegend = (props: CustomLegendProps) => {
 				};
 
 				return (
-					<div key={'fixedChartLegend'} className={styles.fixedChartLegend}>
+					<div
+						key={`fixedChartLegend-${index}`}
+						className={styles.fixedChartLegend}>
 						<LegendIcon
 							width={14}
 							height={10}
