@@ -14,11 +14,12 @@ import styles from '../ReportPage.module.scss';
 
 import type { ISubIssue } from '@/api/models/Epic';
 
-interface DefectDetailsProp {
+interface IssueDetailProp {
+	type: 'defects' | 'improvements';
 	data: {
 		checkList: ISubIssue[];
 		defects: ISubIssue[];
-		improvements: ISubIssue[];
+		improvements?: ISubIssue[];
 	};
 	handleDeleteIssue: (issue: ISubIssue) => void;
 }
@@ -41,10 +42,7 @@ interface ReopenDetailProps {
 	data: DataProps;
 }
 
-export const DefectDetails = ({
-	data,
-	handleDeleteIssue,
-}: DefectDetailsProp) => {
+export const DefectDetails = ({ data, handleDeleteIssue }: IssueDetailProp) => {
 	return (
 		<Section
 			title={
@@ -74,6 +72,112 @@ export const DefectDetails = ({
 									<td align={'center'} className={styles.causeOfDetect}>
 										{issue.causeOfDetect.map((issue) => issue).join(', ')}
 									</td>
+									<td align={'center'}>
+										<span
+											className={styles.clickable}
+											onClick={() => handleDeleteIssue(issue)}>
+											❌
+										</span>
+									</td>
+								</tr>
+							);
+						})}
+				</tbody>
+			</table>
+		</Section>
+	);
+};
+
+export const IssueDetails = ({
+	type,
+	handleDeleteIssue,
+	data,
+}: IssueDetailProp) => {
+	const titleMap = {
+		['defects']: '2. 주요 결함 내역',
+		['improvements']: '3. 주요 개선 내역',
+	};
+
+	const DefectReason = ({ issue }: { issue: ISubIssue; index: number }) => {
+		return (
+			type === 'defects' && (
+				<td align={'center'} className={styles.causeOfDetect}>
+					{issue.causeOfDetect.map((issue) => issue).join(', ')}
+				</td>
+			)
+		);
+	};
+
+	return (
+		<Section title={titleMap[type]}>
+			<table border={1}>
+				<IssueTableHeader type={type as 'defects' | 'improvements'} />
+				<tbody>
+					{(data[`${type}`] as ISubIssue[])
+						.filter((issue) =>
+							type === 'defects'
+								? issue.issueType === '결함'
+								: issue.issueType === '개선' || issue.issueType === '새 기능',
+						)
+						.map((issue, index) => {
+							return (
+								<tr key={`issue-detail-${issue.key}`}>
+									<td align={'center'}>{index + 1}</td>
+									<td>{issue.summary}</td>
+									<td align={'center'}>
+										<NavLink
+											to={`${JIRA_BASE_BROWSE_URL}${issue.key}`}
+											target={'_blank'}>
+											{issue.key}
+										</NavLink>
+									</td>
+									<td align={'center'}>{issue.priority}</td>
+									<td align={'center'}>{issue.status}</td>
+									<DefectReason issue={issue} index={index} />
+									<td align={'center'}>
+										<span
+											className={styles.clickable}
+											onClick={() => handleDeleteIssue(issue)}>
+											❌
+										</span>
+									</td>
+								</tr>
+							);
+						})}
+				</tbody>
+			</table>
+		</Section>
+	);
+};
+
+export const ImprovementDetails = ({
+	data,
+	handleDeleteIssue,
+}: ImprovementDetailsProp) => {
+	return (
+		<Section title={'3. 주요 개선 내역'}>
+			<table border={1}>
+				<IssueTableHeader type={'improvements'} />
+				<tbody>
+					{data.improvements
+						.filter(
+							(issue) =>
+								issue.issueType === '개선' || issue.issueType === '새 기능',
+						)
+						.map((issue, index) => {
+							return (
+								<tr key={index}>
+									<td align={'center'}>{index + 1}</td>
+									<td>{issue.summary}</td>
+									<td align={'center'}>
+										<NavLink
+											to={`${JIRA_BASE_BROWSE_URL}${issue.key}`}
+											target={'_blank'}>
+											{issue.key}
+										</NavLink>
+									</td>
+									<td align={'center'}>{issue.priority}</td>
+									<td align={'center'}>{issue.status}</td>
 									<td align={'center'}>
 										<span
 											className={styles.clickable}
@@ -135,50 +239,6 @@ export const ExcludeDetails = ({ data }: ExcludeDetailsProp) => {
 	);
 };
 
-export const ImprovementDetails = ({
-	data,
-	handleDeleteIssue,
-}: ImprovementDetailsProp) => {
-	return (
-		<Section title={'3. 주요 개선 내역'}>
-			<table border={1}>
-				<IssueTableHeader type={'improvements'} />
-				<tbody>
-					{data.improvements
-						.filter(
-							(issue) =>
-								issue.issueType === '개선' || issue.issueType === '새 기능',
-						)
-						.map((issue, index) => {
-							return (
-								<tr key={index}>
-									<td align={'center'}>{index + 1}</td>
-									<td>{issue.summary}</td>
-									<td align={'center'}>
-										<NavLink
-											to={`${JIRA_BASE_BROWSE_URL}${issue.key}`}
-											target={'_blank'}>
-											{issue.key}
-										</NavLink>
-									</td>
-									<td align={'center'}>{issue.priority}</td>
-									<td align={'center'}>{issue.status}</td>
-									<td align={'center'}>
-										<span
-											className={styles.clickable}
-											onClick={() => handleDeleteIssue(issue)}>
-											❌
-										</span>
-									</td>
-								</tr>
-							);
-						})}
-				</tbody>
-			</table>
-		</Section>
-	);
-};
-
 export const ReopenDetails = ({
 	type = 'defect_improvement',
 	data,
@@ -188,17 +248,21 @@ export const ReopenDetails = ({
 			? '4. 재발생 이슈 (QC 이슈)'
 			: '5. 재발생 이슈 (확인 이슈)';
 	// 재발생 이슈 집계
-	const combinedReopenIssues: Set<ISubIssue> = 
+	const combinedReopenIssues: Set<ISubIssue> =
 		type === 'defect_improvement'
 			? new Set([
 					...data.defects.filter((issue) => issue.reopenVersions.length >= 1),
-					...data.improvements.filter((issue) => issue.reopenVersions.length >= 1),
-			  ])
+					...data.improvements.filter(
+						(issue) => issue.reopenVersions.length >= 1,
+					),
+				])
 			: type === 'checkList'
-			? new Set([
-					...data.checkList.filter((issue) => issue.reopenVersions.length >= 1),
-			  ])
-			: new Set();
+				? new Set([
+						...data.checkList.filter(
+							(issue) => issue.reopenVersions.length >= 1,
+						),
+					])
+				: new Set();
 
 	return (
 		<Section title={title}>

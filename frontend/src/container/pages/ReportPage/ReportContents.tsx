@@ -17,6 +17,7 @@ import {
 	DefectDetails,
 	ExcludeDetails,
 	ImprovementDetails,
+	IssueDetails,
 	ReopenDetails,
 } from '@/container/pages/ReportPage/Sections/IssueDetails.tsx';
 import TestSummary from '@/container/pages/ReportPage/Sections/TestSummary.tsx';
@@ -143,17 +144,27 @@ export default function ReportContents() {
 					hasCheckListIssue={hasCheckListIssue}
 					priorityCount={priorityCount}
 				/>
-				{/* 주요 결함 내역 */}
-				<DefectDetails data={data} handleDeleteIssue={handleDeleteIssue} />
 
-				{/* 주요 개선 내역 */}
-				<ImprovementDetails data={data} handleDeleteIssue={handleDeleteIssue} />
+				{/* 주요 결함 내역, 주요 개선 내역 */}
+				{['defects', 'improvements'].map((type) => {
+					return (
+						<IssueDetails
+							key={type}
+							type={type as 'defects' | 'improvements'}
+							data={data}
+							handleDeleteIssue={handleDeleteIssue}
+						/>
+					);
+				})}
 
-				{/* 재발생 이슈(QC) */}
-				<ReopenDetails data={data} type={'defect_improvement'} />
-
-				{/* 재발생 이슈(확인 이슈) */}
-				<ReopenDetails data={data} type={'checkList'} />
+				{/* 재발생 이슈(QC), 재발생 이슈(확인 이슈) */}
+				{['defect_improvement', 'checkList'].map((type) => (
+					<ReopenDetails
+						key={type}
+						data={data}
+						type={type as 'defect_improvement' | 'checkList'}
+					/>
+				))}
 
 				{/* 집계 제외 이슈 */}
 				<ExcludeDetails data={data} />
@@ -251,9 +262,9 @@ export default function ReportContents() {
 }
 
 export const IssueTableHeader = ({
-	type = 'defect',
+	type = 'defects',
 }: {
-	type?: 'defect' | 'improvements' | 'excludeDefects' | 'reopen';
+	type?: 'defects' | 'improvements' | 'excludeDefects' | 'reopen';
 }) => {
 	return (
 		<thead>
