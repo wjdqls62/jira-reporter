@@ -1,4 +1,5 @@
 export interface ISubIssue {
+	summary: string;
 	id: string;
 	key: string;
 	parent: {
