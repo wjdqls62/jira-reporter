@@ -23,6 +23,7 @@ export default function useReportCalculator(epicData: IData) {
 	const issueCount = useMemo(() => {
 		return {
 			defects: epicData.defects.length,
+			improvements: epicData.improvements.length,
 			checkList: {
 				defect: epicData.checkList.filter((issue) => issue.issueType === '결함')
 					.length,

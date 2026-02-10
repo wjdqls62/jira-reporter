@@ -158,13 +158,13 @@ export default function ReportContents() {
 				{/* 집계 제외 이슈 */}
 				<ExcludeDetails data={data} />
 
-				<Section title={'4. 차트'}>
+				<Section title={'7. 차트'}>
 					<Flex flexDirection={'column'}>
 						<Section
 							title={
 								<Flex>
 									<Flex>
-										<span>4-1. 결함 원인별 발생 현황</span>
+										<span>7-1. 결함 원인별 발생 현황</span>
 										<select onChange={handleChangeCauseOfDetectType}>
 											<option value={'bar'}>막대 그래프</option>
 											<option value={'pie'}>원형 그래프</option>
@@ -175,7 +175,7 @@ export default function ReportContents() {
 							}>
 							<Flex flexDirection={'column'}>{renderDefectReasonChart()}</Flex>
 						</Section>
-						<Section title={'4-2. 이슈 중요도별 수정률'}>
+						<Section title={'7-2. 이슈 중요도별 수정률'}>
 							<CustomChart
 								data={[...data.defects, ...data.improvements]}
 								dataKey={'causeOfDetect'}

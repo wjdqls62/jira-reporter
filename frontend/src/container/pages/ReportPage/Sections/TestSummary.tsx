@@ -12,6 +12,7 @@ interface TestSummaryProps {
 	versions: Set<string>;
 	issueCount: {
 		defects: number;
+		improvements: number;
 		checkList: {
 			defect: number;
 			improvements: number;
