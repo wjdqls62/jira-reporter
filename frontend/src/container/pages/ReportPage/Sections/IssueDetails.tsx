@@ -131,7 +131,9 @@ export const IssueDetails = ({
 											{issue.key}
 										</NavLink>
 									</td>
-									<td align={'center'}>{issue.priority}</td>
+									<td align={'center'}>
+										{type === 'defects' ? issue.defectPriority : issue.priority}
+									</td>
 									<td align={'center'}>{issue.status}</td>
 									<DefectReason issue={issue} index={index} />
 									<td align={'center'}>

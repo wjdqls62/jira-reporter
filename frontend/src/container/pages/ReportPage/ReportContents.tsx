@@ -52,6 +52,7 @@ export default function ReportContents() {
 		checkListKey: state?.checkListKey || null,
 	});
 
+	const [data, setData] = useState<DataProps>(defaultDataValues);
 	const {
 		hasCheckListIssue,
 		hasReopenIssue,
@@ -59,9 +60,7 @@ export default function ReportContents() {
 		priorityCount,
 		issueCount,
 		version: versions,
-	} = useReportCalculator(epicData);
-
-	const [data, setData] = useState<DataProps>(defaultDataValues);
+	} = useReportCalculator(data);
 	const { resetIssue } = useReportPage();
 
 	const [chartTypes, setChartTypes] = useState<ChartTypesProps>({
@@ -273,7 +272,7 @@ export const IssueTableHeader = ({
 				{type === 'reopen' && <th>이슈 구분</th>}
 				<th>설명</th>
 				<th>키</th>
-				<th>심각도</th>
+				<th>{type === 'improvements' ? '우선순위' : '심각도'}</th>
 				<th>처리 상태</th>
 				{type !== 'improvements' && <th>결함 원인</th>}
 				{type !== 'excludeDefects' && type !== 'reopen' && <th>삭제</th>}
