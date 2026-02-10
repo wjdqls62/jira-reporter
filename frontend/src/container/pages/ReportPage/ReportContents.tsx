@@ -409,15 +409,17 @@ export const IssueTableHeader = ({
 }) => {
 	return (
 		<thead>
-			<th>번호</th>
-			{type === 'reopen' && <th>이슈 구분</th>}
-			<th>설명</th>
-			<th>키</th>
-			<th>심각도</th>
-			<th>처리 상태</th>
-			{type !== 'improvements' && <th>결함 원인</th>}
-			{type !== 'excludeDefects' && type !== 'reopen' && <th>삭제</th>}
-			{type === 'reopen' && <th>재발생 버전</th>}
+			<tr>
+				<th>번호</th>
+				{type === 'reopen' && <th>이슈 구분</th>}
+				<th>설명</th>
+				<th>키</th>
+				<th>심각도</th>
+				<th>처리 상태</th>
+				{type !== 'improvements' && <th>결함 원인</th>}
+				{type !== 'excludeDefects' && type !== 'reopen' && <th>삭제</th>}
+				{type === 'reopen' && <th>재발생 버전</th>}
+			</tr>
 		</thead>
 	);
 };

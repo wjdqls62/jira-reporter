@@ -52,9 +52,11 @@ export default function TestSummary({
 			<div>
 				<table border={1}>
 					<thead>
-						<th colSpan={2}>구분</th>
-						<th>내용</th>
-						<th>비고</th>
+						<tr>
+							<th colSpan={2}>구분</th>
+							<th>내용</th>
+							<th>비고</th>
+						</tr>
 					</thead>
 					<tbody>
 						<tr>
