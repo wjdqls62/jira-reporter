@@ -1,26 +1,31 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Tooltip } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
-import { FiInfo } from 'react-icons/fi';
 import { HiOutlineRefresh } from 'react-icons/hi';
 import { MdLogout } from 'react-icons/md';
-import { NavLink, useLocation } from 'react-router-dom';
-import styles from './ReportPage.module.scss';
-import { useReportPage } from './ReportPage.tsx';
-import { JIRA_BASE_BROWSE_URL } from '../../../constants/Common.ts';
-import CustomChart from '../../components/CustomChart/CustomChart.tsx';
-import Header from '../../components/Header/Header.tsx';
-import Button from '../../components/UiTools/Button/Button.tsx';
-import Divider from '../../components/UiTools/Divider.tsx';
-import Loading from '../../components/UiTools/Loading.tsx';
-import { Flex, Section } from '../../components/UiTools/UiTools.tsx';
-import useJiraIssue from '../../hooks/useJiraIssue.ts';
-import type { ISubIssue } from '../../../api/models/Epic.ts';
-import useReportCalculator from '../../hooks/useReportCalculator.ts';
-import TestSummary from './Sections/TestSummary.tsx';
-import { DefectDetails } from './Sections/IssueDetails.tsx';
+import { useLocation } from 'react-router-dom';
 
-interface DataProps {
+import CustomChart from '@/container/components/CustomChart/CustomChart.tsx';
+import Header from '@/container/components/Header/Header';
+import Button from '@/container/components/UiTools/Button/Button.tsx';
+import Divider from '@/container/components/UiTools/Divider.tsx';
+import Loading from '@/container/components/UiTools/Loading.tsx';
+import { Flex, Section } from '@/container/components/UiTools/UiTools.tsx';
+import useJiraIssue from '@/container/hooks/useJiraIssue.ts';
+import useReportCalculator from '@/container/hooks/useReportCalculator.ts';
+import { useReportPage } from '@/container/pages/ReportPage/ReportPage.tsx';
+import {
+	DefectDetails,
+	ExcludeDetails,
+	ImprovementDetails,
+	ReopenDetails,
+} from '@/container/pages/ReportPage/Sections/IssueDetails.tsx';
+import TestSummary from '@/container/pages/ReportPage/Sections/TestSummary.tsx';
+
+import styles from './ReportPage.module.scss';
+
+import type { ISubIssue } from '@/api/models/Epic.ts';
+
+export interface DataProps {
 	defects: ISubIssue[];
 	improvements: ISubIssue[];
 	excludeDefects: ISubIssue[];
@@ -138,179 +143,21 @@ export default function ReportContents() {
 					hasCheckListIssue={hasCheckListIssue}
 					priorityCount={priorityCount}
 				/>
-				{/*주요 결함 내역*/}
+				{/* 주요 결함 내역 */}
 				<DefectDetails data={data} handleDeleteIssue={handleDeleteIssue} />
 
-				<Section
-					title={(() => {
-						return (
-							<Flex gap={6}>
-								<span>2-1. 집계 제외 이슈 (이슈 아님)</span>
-								<Tooltip
-									title={
-										'`이슈 아님`, `테스트 오류`, `재현되지 않음`  유형의 결함 이슈를 통계에서 제외합니다.'
-									}>
-									<div style={{ display: 'inline-flex', cursor: 'pointer' }}>
-										<FiInfo size={18} />
-									</div>
-								</Tooltip>
-							</Flex>
-						);
-					})()}>
-					<table border={1}>
-						<IssueTableHeader type={'excludeDefects'} />
-						<tbody>
-							{data.excludeDefects.map((issue, index) => {
-								return (
-									<tr key={`$exclude-${index}`}>
-										<td align={'center'}>{index + 1}</td>
-										<td>{issue.summary}</td>
-										<td className={styles.issueKey} align={'center'}>
-											<NavLink
-												to={`${JIRA_BASE_BROWSE_URL}${issue.key}`}
-												target={'_blank'}>
-												{issue.key}
-											</NavLink>
-										</td>
-										<td align={'center'}>{issue.priority}</td>
-										<td align={'center'}>{issue.status}</td>
-										<td align={'center'}>{issue.causeOfDetect.join(', ')}</td>
-									</tr>
-								);
-							})}
-						</tbody>
-					</table>
-				</Section>
-				{(hasReopenIssue.defects || hasReopenIssue.improvements) && (
-					<Section title={'2-2. 재발생 이슈 (QC 이슈)'}>
-						<table border={1}>
-							<IssueTableHeader type={'reopen'} />
-							<tbody>
-								{(() => {
-									const combinedReopenIssues = new Set([
-										...data.defects.filter(
-											(issue) => issue.reopenVersions.length >= 1,
-										),
-										...data.improvements.filter(
-											(issue) => issue.reopenVersions.length >= 1,
-										),
-									]);
+				{/* 주요 개선 내역 */}
+				<ImprovementDetails data={data} handleDeleteIssue={handleDeleteIssue} />
 
-									return Array.from(combinedReopenIssues).map(
-										(issue, index) => {
-											return (
-												<tr key={`reopenIssue-${index}`}>
-													<td align={'center'}>{index + 1}</td>
-													<td align={'center'}>{issue.issueType}</td>
-													<td>{issue.summary}</td>
-													<td align={'center'}>
-														<NavLink
-															to={`${JIRA_BASE_BROWSE_URL}${issue.key}`}
-															target={'_blank'}>
-															{issue.key}
-														</NavLink>
-													</td>
-													<td align={'center'}>{issue.priority}</td>
-													<td align={'center'}>{issue.status}</td>
-													<td align={'center'}>
-														{issue.causeOfDetect.join(', ')}
-													</td>
-													<td align={'center'}>
-														{issue.reopenVersions
-															.map((version) => version)
-															.join(', ')}
-													</td>
-												</tr>
-											);
-										},
-									);
-								})()}
-							</tbody>
-						</table>
-					</Section>
-				)}
-				{(hasReopenIssue.checkListDefects ||
-					hasReopenIssue.checkListImprovements) && (
-					<Section title={'2-3. 재발생 이슈 (확인 이슈)'}>
-						<table border={1}>
-							<IssueTableHeader type={'reopen'} />
-							<tbody>
-								{(() => {
-									const combinedReopenCheckListIssues = new Set([
-										...data.checkList.filter(
-											(issue) => issue.reopenVersions.length >= 1,
-										),
-									]);
+				{/* 재발생 이슈(QC) */}
+				<ReopenDetails data={data} type={'defect_improvement'} />
 
-									return Array.from(combinedReopenCheckListIssues).map(
-										(issue, index) => {
-											return (
-												<tr key={'reopenIssue'}>
-													<td align={'center'}>{index + 1}</td>
-													<td align={'center'}>{issue.issueType}</td>
-													<td>{issue.summary}</td>
-													<td align={'center'}>
-														<NavLink
-															to={`${JIRA_BASE_BROWSE_URL}${issue.key}`}
-															target={'_blank'}>
-															{issue.key}
-														</NavLink>
-													</td>
-													<td align={'center'}>{issue.priority}</td>
-													<td align={'center'}>{issue.status}</td>
-													<td align={'center'}>
-														{issue.causeOfDetect.join(', ')}
-													</td>
-													<td align={'center'}>
-														{issue.reopenVersions
-															.map((version) => version)
-															.join(', ')}
-													</td>
-												</tr>
-											);
-										},
-									);
-								})()}
-							</tbody>
-						</table>
-					</Section>
-				)}
-				<Section title={'3. 주요 개선 내역'}>
-					<table border={1}>
-						<IssueTableHeader type={'improvements'} />
-						<tbody>
-							{data.improvements
-								.filter(
-									(issue) =>
-										issue.issueType === '개선' || issue.issueType === '새 기능',
-								)
-								.map((issue, index) => {
-									return (
-										<tr key={index}>
-											<td align={'center'}>{index + 1}</td>
-											<td>{issue.summary}</td>
-											<td align={'center'}>
-												<NavLink
-													to={`${JIRA_BASE_BROWSE_URL}${issue.key}`}
-													target={'_blank'}>
-													{issue.key}
-												</NavLink>
-											</td>
-											<td align={'center'}>{issue.priority}</td>
-											<td align={'center'}>{issue.status}</td>
-											<td align={'center'}>
-												<span
-													className={styles.clickable}
-													onClick={() => handleDeleteIssue(issue)}>
-													❌
-												</span>
-											</td>
-										</tr>
-									);
-								})}
-						</tbody>
-					</table>
-				</Section>
+				{/* 재발생 이슈(확인 이슈) */}
+				<ReopenDetails data={data} type={'checkList'} />
+
+				{/* 집계 제외 이슈 */}
+				<ExcludeDetails data={data} />
+
 				<Section title={'4. 차트'}>
 					<Flex flexDirection={'column'}>
 						<Section
@@ -402,6 +249,7 @@ export default function ReportContents() {
 		</div>
 	);
 }
+
 export const IssueTableHeader = ({
 	type = 'defect',
 }: {

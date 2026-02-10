@@ -21,7 +21,22 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    /* Path mapping */
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"],
+      "@/api/*": ["api/*"],
+      "@/assets/*": ["assets/*"],
+      "@/components/*": ["container/components/*"],
+      "@/constants/*": ["constants/*"],
+      "@/container/*": ["container/*"],
+      "@/hooks/*": ["container/hooks/*"],
+      "@/layout/*": ["container/layout/*"],
+      "@/pages/*": ["container/pages/*"],
+      "@/validation/*": ["validation/*"]
+    }
   },
   "include": ["src"]
 }
