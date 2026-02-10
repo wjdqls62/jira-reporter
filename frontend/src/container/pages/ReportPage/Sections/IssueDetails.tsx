@@ -187,21 +187,18 @@ export const ReopenDetails = ({
 		type === 'defect_improvement'
 			? '4. 재발생 이슈 (QC 이슈)'
 			: '5. 재발생 이슈 (확인 이슈)';
-	let combinedReopenIssues: Set<ISubIssue> = new Set();
-
-	// QC 이슈중 재발생 이슈 집계
-	if (type === 'defect_improvement') {
-		combinedReopenIssues = new Set([
-			...data.defects.filter((issue) => issue.reopenVersions.length >= 1),
-			...data.improvements.filter((issue) => issue.reopenVersions.length >= 1),
-		]);
-	}
-	// 확인 이슈의 재발생 이슈 집계
-	else if (type === 'checkList') {
-		combinedReopenIssues = new Set([
-			...data.checkList.filter((issue) => issue.reopenVersions.length >= 1),
-		]);
-	}
+	// 재발생 이슈 집계
+	const combinedReopenIssues: Set<ISubIssue> = 
+		type === 'defect_improvement'
+			? new Set([
+					...data.defects.filter((issue) => issue.reopenVersions.length >= 1),
+					...data.improvements.filter((issue) => issue.reopenVersions.length >= 1),
+			  ])
+			: type === 'checkList'
+			? new Set([
+					...data.checkList.filter((issue) => issue.reopenVersions.length >= 1),
+			  ])
+			: new Set();
 
 	return (
 		<Section title={title}>
