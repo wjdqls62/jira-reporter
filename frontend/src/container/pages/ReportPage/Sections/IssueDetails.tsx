@@ -8,7 +8,7 @@ import { Flex, Section } from '@/container/components/UiTools/UiTools';
 import {
 	type DataProps,
 	IssueTableHeader,
-} from '@/pages/ReportPage/ReportContents.tsx';
+} from '@/container/pages/ReportPage/ReportContents.tsx';
 
 import styles from '../ReportPage.module.scss';
 
