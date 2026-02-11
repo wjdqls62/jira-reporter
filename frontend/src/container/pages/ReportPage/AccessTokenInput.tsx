@@ -31,10 +31,10 @@ type FormValues = {
 const defaultValues = {
 	email: localStorage.getItem('email') || '',
 	accessToken: localStorage.getItem('jiraToken') || '',
-	issueKey: '',
-	issueType: 'epic',
-	isCheckList: false,
-	checkListKey: '',
+	issueKey: localStorage.getItem('issueKey') || '',
+	issueType: localStorage.getItem('issueType') || 'epic',
+	isCheckList: !!localStorage.getItem('checkListKey'),
+	checkListKey: localStorage.getItem('checkListKey') || '',
 };
 
 export default function AccessTokenInput({ onSubmitToken }: Props) {
@@ -46,7 +46,7 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 	const { email, accessToken, issueKey, checkListKey, isCheckList } = useWatch({
 		control: control,
 	});
-	
+
 	const { submitWithAuth, isLoading } = useAuth();
 
 	const handleIssueTypeChange = (value: 'epic' | 'issues') => {
@@ -62,7 +62,7 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 				issueType: issueType,
 				checkListKey: formData.checkListKey,
 			},
-			onSubmitToken
+			onSubmitToken,
 		);
 	};
 
@@ -128,7 +128,7 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 								onChange={(value) =>
 									handleIssueTypeChange(value as 'epic' | 'issues')
 								}
-								defaultValue={'epic'}
+								defaultValue={issueType ? issueType : 'epic'}
 							/>
 						</div>
 						<div className={styles.labelWithField}>
