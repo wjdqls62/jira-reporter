@@ -220,7 +220,7 @@ export default function ReportContents() {
 	const initialDate = (epicData) => {
 		if (epicData) {
 			// (부작업)개선, (부작업)결함, (부작업)새 기능에서 `(부작업)` 문자열 제거
-			const convertChecklist = epicData.checkList.map((issue) => {
+			const convertChecklist = epicData?.checkList?.map((issue) => {
 				return {
 					...issue,
 					issueType: issue.issueType.replace(/^\(부작업\)/, ''),
@@ -228,10 +228,10 @@ export default function ReportContents() {
 			});
 
 			setData({
-				defects: epicData.defects,
-				improvements: epicData.improvements,
-				excludeDefects: epicData.excludeDefects,
-				checkList: convertChecklist,
+				defects: epicData?.defects || [],
+				improvements: epicData?.improvements || [],
+				excludeDefects: epicData?.excludeDefects || [],
+				checkList: convertChecklist || [],
 			});
 		}
 	};

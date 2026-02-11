@@ -14,11 +14,28 @@ export default function ErrorPage() {
 		window.location.href = '/report';
 	};
 
-	const parseError = errorObj.response.data.error.split(':');
-	const error = {
-		errorMessage: parseError[0].trim(),
-		statusCode: parseError[1].trim(),
+	// 안전한 에러 파싱 로직
+	let error = {
+		errorMessage: '알 수 없는 오류',
+		statusCode: '500',
 	};
+
+	try {
+		if (errorObj?.response?.data?.error) {
+			const parseError = errorObj.response.data.error.split(':');
+			if (parseError.length >= 2) {
+				error = {
+					errorMessage: parseError[0].trim(),
+					statusCode: parseError[1].trim(),
+				};
+			}
+		} else if (errorObj?.message) {
+			error.errorMessage = errorObj.message;
+		}
+	} catch (e) {
+		console.error('Error parsing error object:', e);
+		// 기본값 유지
+	}
 
 	return (
 		<div className={styles.errorContainer}>
