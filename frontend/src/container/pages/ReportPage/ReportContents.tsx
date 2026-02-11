@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { enqueueSnackbar } from 'notistack';
 import { HiOutlineRefresh } from 'react-icons/hi';
+import { LuFileJson } from 'react-icons/lu';
 import { MdLogout } from 'react-icons/md';
 import { useLocation } from 'react-router-dom';
 
@@ -14,9 +15,7 @@ import useJiraIssue from '@/container/hooks/useJiraIssue.ts';
 import useReportCalculator from '@/container/hooks/useReportCalculator.ts';
 import { useReportPage } from '@/container/pages/ReportPage/ReportPage.tsx';
 import {
-	DefectDetails,
 	ExcludeDetails,
-	ImprovementDetails,
 	IssueDetails,
 	ReopenDetails,
 } from '@/container/pages/ReportPage/Sections/IssueDetails.tsx';
@@ -79,6 +78,22 @@ export default function ReportContents() {
 				),
 			};
 		});
+	};
+
+	const downloadJson = () => {
+		const jsonString = JSON.stringify(data, null, 2);
+		const blob = new Blob([jsonString], { type: 'application/json' });
+
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement('a');
+		link.href = url;
+		link.download = 'issues.json';
+		link.click();
+		URL.revokeObjectURL(url);
+	};
+
+	const handleJsonDownload = () => {
+		downloadJson();
 	};
 
 	const handleRefresh = async () => {
@@ -244,6 +259,12 @@ export default function ReportContents() {
 				<Divider align={'horizontal'} color={'#a1a1a1'} />
 				<Header>
 					<>
+						<Button
+							label={'JSON 다운로드'}
+							icon={<LuFileJson />}
+							onClick={handleJsonDownload}
+						/>
+						<Button label={'LLM 분석'} icon={<LuFileJson />} disabled={true} />
 						<Button
 							label={'새로고침'}
 							icon={<HiOutlineRefresh size={14} />}
