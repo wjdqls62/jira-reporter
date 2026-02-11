@@ -1,12 +1,9 @@
 import { useState } from 'react';
-import axios from 'axios';
-import { useSnackbar } from 'notistack';
 import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
 
 import styles from './ReportPage.module.scss';
-import { baseUrl } from '../../../api/apiClient';
-import { SWR_KEYS } from '../../../api/swrKeys.ts';
 import { commonValidate } from '../../../validation/commonValidate.ts';
+import { useAuth } from '../../hooks/useAuth';
 import RadioButton, {
 	type LabelWithValue,
 } from '../../components/UiTools/RadioButton/RadioButton.tsx';
@@ -16,9 +13,9 @@ import { HelperText } from '../../components/UiTools/UiTools.tsx';
 interface Props {
 	onSubmitToken: (
 		token: string,
-		issueKey: string,
+		issueKey: string | string[],
 		issueType: 'epic' | 'issues',
-		checkListKey: string | null,
+		checkListKey: string[] | null,
 	) => void;
 }
 
@@ -49,47 +46,24 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 	const { email, accessToken, issueKey, checkListKey, isCheckList } = useWatch({
 		control: control,
 	});
-
-	const { enqueueSnackbar } = useSnackbar();
+	
+	const { submitWithAuth, isLoading } = useAuth();
 
 	const handleIssueTypeChange = (value: 'epic' | 'issues') => {
 		setIssueType(value);
 	};
 
 	const onSubmit = async (formData: FormValues) => {
-		await axios
-			.post(
-				`${baseUrl}${SWR_KEYS.validateToken}`,
-				{},
-				{
-					headers: {
-						username: formData.email,
-						password: formData.accessToken,
-					},
-				},
-			)
-			.then((res) => {
-				const { data } = res;
-				if (data.message === '인증이 성공했습니다.') {
-					enqueueSnackbar(data.message, {
-						variant: 'success',
-						autoHideDuration: 1500,
-						anchorOrigin: { vertical: 'bottom', horizontal: 'center' },
-					});
-					localStorage.setItem('email', formData.email);
-					localStorage.setItem('jiraToken', formData.accessToken);
-
-					onSubmitToken(
-						formData.accessToken,
-						formData.issueKey,
-						issueType,
-						(checkListKey === '' ? null : checkListKey) as string | null,
-					);
-				}
-			})
-			.catch((error) => {
-				alert(error.response.data);
-			});
+		await submitWithAuth(
+			{
+				email: formData.email,
+				accessToken: formData.accessToken,
+				issueKey: formData.issueKey,
+				issueType: issueType,
+				checkListKey: formData.checkListKey,
+			},
+			onSubmitToken
+		);
 	};
 
 	return (
@@ -208,8 +182,10 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 								name={'checkListKey'}
 							/>
 						</div>
-						<button className={styles.submitButton} type={'submit'}>
-							조회
+						<button
+							className={`${styles.submitButton} ${isLoading ? styles.disabled : ''}`}
+							type={'submit'}>
+							{isLoading ? '인증중...' : '조회'}
 						</button>
 					</div>
 				</div>

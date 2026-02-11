@@ -179,11 +179,10 @@ export default function useJiraIssue({
 			};
 		},
 		{
-			suspense: true,
-			revalidateOnMount: true, // 마운트 시 무조건 새 요청
-			dedupingInterval: 0, // 중복 요청 방지 시간 0
-			revalidateIfStale: true, // 캐시가 stale이면 즉시 요청
-			revalidateOnFocus: false, // 포커스 이동 시 재요청 X (원하면 true)
+			revalidateOnMount: true,
+			dedupingInterval: 2000, // 2초간 중복 요청 방지
+			revalidateIfStale: true,
+			revalidateOnFocus: false,
 		},
 	);
 
