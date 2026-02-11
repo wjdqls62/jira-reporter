@@ -60,6 +60,8 @@ export default function ReportContents() {
 		priorityCount,
 		issueCount,
 		version: versions,
+		defectActionRates,
+		improvementsActionRates,
 	} = useReportCalculator(data);
 	const { resetIssue } = useReportPage();
 
@@ -142,6 +144,8 @@ export default function ReportContents() {
 					hasReopenIssue={hasReopenIssue}
 					hasCheckListIssue={hasCheckListIssue}
 					priorityCount={priorityCount}
+					defectActionRates={defectActionRates}
+					improvementsActionRates={improvementsActionRates}
 				/>
 
 				{/* 주요 결함 내역, 주요 개선 내역 */}

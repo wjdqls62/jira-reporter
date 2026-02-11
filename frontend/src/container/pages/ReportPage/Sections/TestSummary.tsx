@@ -1,7 +1,8 @@
-import { defectPriority } from '../../../../constants/Issue.ts';
-import { Section } from '../../../components/UiTools/UiTools.tsx';
 import React from 'react';
-import type { ISubIssue } from '../../../../api/models/Epic.ts';
+import { Section } from '@/container/components/UiTools/UiTools.tsx';
+import { defectPriority } from '@/constants/Issue.ts';
+
+import type { ISubIssue } from '@/api/models/Epic.ts';
 
 interface TestSummaryProps {
 	data: {
@@ -37,6 +38,8 @@ interface TestSummaryProps {
 	};
 	hasCheckListIssue: boolean;
 	priorityCount: Record<string, number>;
+	defectActionRates: string;
+	improvementsActionRates: string;
 }
 
 export default function TestSummary({
@@ -47,6 +50,8 @@ export default function TestSummary({
 	hasReopenIssue,
 	hasCheckListIssue,
 	priorityCount,
+	defectActionRates,
+	improvementsActionRates,
 }: TestSummaryProps) {
 	return (
 		<Section title={'1. 테스트 요약'}>
@@ -352,39 +357,14 @@ export default function TestSummary({
 							<tr>
 								<td rowSpan={2}>전체 이슈</td>
 								<td>결함 조치율</td>
-								<td>
-									{(() => {
-										const fixedRate =
-											((fixedIssueCount.defects +
-												fixedIssueCount.checkList.defect) /
-												(issueCount.defects + issueCount.checkList.defect)) *
-											100;
-										return `${fixedIssueCount.defects + fixedIssueCount.checkList.defect} / ${issueCount.defects + issueCount.checkList.defect} = ${isNaN(fixedRate) ? 0 : fixedRate.toFixed(2)}%`;
-									})()}
-								</td>
+								<td>{defectActionRates}</td>
 								<td>확인대상(결함) + QC결함</td>
 							</tr>
 						)}
 						{hasCheckListIssue && (
 							<tr>
 								<td>개선 조치율</td>
-								<td>
-									{(() => {
-										const fixedRate =
-											((fixedIssueCount.improvements +
-												fixedIssueCount.checkList.improvements +
-												fixedIssueCount.checkList.works) /
-												(issueCount.improvements +
-													issueCount.checkList.improvements +
-													issueCount.checkList.works)) *
-											100;
-										return `${fixedIssueCount.improvements + fixedIssueCount.checkList.improvements + fixedIssueCount.checkList.works} / ${
-											issueCount.improvements +
-											issueCount.checkList.improvements +
-											issueCount.checkList.works
-										} = ${isNaN(fixedRate) ? 0 : fixedRate.toFixed(2)}%`;
-									})()}
-								</td>
+								<td>{improvementsActionRates}</td>
 								<td>{`확인대상 + 신규 개선,새기능${issueCount.checkList.works >= 1 ? ' + 작업, 부작업' : ''}`}</td>
 							</tr>
 						)}

@@ -36,7 +36,7 @@ export default function useReportCalculator(epicData: IData) {
 				).length,
 			},
 		};
-	}, [epicData.defects, epicData.checkList]);
+	}, [epicData.defects, epicData.checkList, epicData.improvements]);
 
 	// 수정된 이슈 카운트
 	const fixedIssueCount = useMemo(() => {
@@ -114,6 +114,39 @@ export default function useReportCalculator(epicData: IData) {
 		return epicData.checkList.some((issue) => issue);
 	}, [epicData.checkList]);
 
+	// 전체 결함 조치율
+	const defectActionRates = useMemo(() => {
+		const fixedRate =
+			((fixedIssueCount.defects + fixedIssueCount.checkList.defect) /
+				(issueCount.defects + issueCount.checkList.defect)) *
+			100;
+		return `${fixedIssueCount.defects + fixedIssueCount.checkList.defect} / ${issueCount.defects + issueCount.checkList.defect} = ${isNaN(fixedRate) ? 0 : fixedRate.toFixed(2)}%`;
+	}, [epicData.defects, epicData.checkList, epicData.improvements]);
+
+	// 전체 개선 조치율
+	const improvementsActionRates = useMemo(() => {
+		const fixedRate =
+			((fixedIssueCount.improvements +
+				fixedIssueCount.checkList.improvements +
+				fixedIssueCount.checkList.works) /
+				(issueCount.improvements +
+					issueCount.checkList.improvements +
+					issueCount.checkList.works)) *
+			100;
+		return `${fixedIssueCount.improvements + fixedIssueCount.checkList.improvements + fixedIssueCount.checkList.works} / ${
+			issueCount.improvements +
+			issueCount.checkList.improvements +
+			issueCount.checkList.works
+		} = ${isNaN(fixedRate) ? 0 : fixedRate.toFixed(2)}%`;
+	}, [
+		fixedIssueCount.improvements,
+		fixedIssueCount.checkList.improvements,
+		fixedIssueCount.checkList.works,
+		issueCount.improvements,
+		issueCount.checkList.improvements,
+		issueCount.checkList.works,
+	]);
+
 	return {
 		version,
 		issueCount,
@@ -121,5 +154,7 @@ export default function useReportCalculator(epicData: IData) {
 		priorityCount,
 		hasReopenIssue,
 		hasCheckListIssue,
+		defectActionRates,
+		improvementsActionRates,
 	};
 }
