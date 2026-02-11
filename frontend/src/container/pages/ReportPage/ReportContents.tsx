@@ -239,7 +239,11 @@ export default function ReportContents() {
 	useEffect(() => {
 		initialDate(epicData);
 
-		if (state.checkListKey !== null && epicData.checkList.length === 0) {
+		if (
+			epicData &&
+			state.checkListKey !== null &&
+			epicData.checkList.length === 0
+		) {
 			enqueueSnackbar('확인 이슈 검색 결과가 없습니다.', {
 				variant: 'warning',
 				autoHideDuration: 3000,
