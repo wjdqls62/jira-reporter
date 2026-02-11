@@ -56,18 +56,23 @@ export default function TestSummary({
 	defectActionRates,
 	improvementsActionRates,
 }: TestSummaryProps) {
-	const ReopenIssueLink = ({ issueKeys }: { issueKeys: string[] }) => {
+	const ReopenIssueLink = ({
+		issueKeys,
+		prefix,
+	}: {
+		issueKeys: string[];
+		prefix?: string;
+	}) => {
 		return issueKeys.map((key, index) => {
 			return (
-				<>
+				<React.Fragment key={`${prefix ? prefix : ''}-${key}`}>
 					<NavLink
-						key={key}
 						to={`${JIRA_BASE_BROWSE_URL}${key}`}
 						target={'_blank'}>
 						{key}
 					</NavLink>
 					{issueKeys.length - 1 === index ? '' : ', '}
-				</>
+				</React.Fragment>
 			);
 		});
 	};
@@ -138,7 +143,10 @@ export default function TestSummary({
 												return (
 													<>
 														<div>{`재발생: ${reopenCount}건`}</div>
-														<ReopenIssueLink issueKeys={reopenIssueKeys} />
+														<ReopenIssueLink
+															prefix={`summary-reopen-checkListDefects`}
+															issueKeys={reopenIssueKeys}
+														/>
 													</>
 												);
 											})()}
@@ -184,7 +192,10 @@ export default function TestSummary({
 												return (
 													<>
 														<div>{`재발생: ${reopenCount}건`}</div>
-														<ReopenIssueLink issueKeys={reopenIssueKeys} />
+														<ReopenIssueLink
+															prefix={`summary-reopen-checkListImprovements`}
+															issueKeys={reopenIssueKeys}
+														/>
 													</>
 												);
 											})()}
@@ -236,6 +247,7 @@ export default function TestSummary({
 																		<div>{`재발생: ${reopenCount}건`}</div>
 																		<div>
 																			<ReopenIssueLink
+																				prefix={`summary-reopen-checkListWorks`}
 																				issueKeys={reopenIssueKeys}
 																			/>
 																		</div>
@@ -301,6 +313,7 @@ export default function TestSummary({
 																<div>{`재발생: ${reopenCount}건`}</div>
 																<div>
 																	<ReopenIssueLink
+																		prefix={`issueTable-reopen-defects`}
 																		issueKeys={Array.from(reopenIssueKeys)}
 																	/>
 																</div>
@@ -353,6 +366,7 @@ export default function TestSummary({
 													<div>재발생: {`${reopenCount.length}개`}</div>
 													<div>
 														<ReopenIssueLink
+															prefix={`issueTable-reopen-improvements`}
 															issueKeys={Array.from(reopenImprovementsKeys)}
 														/>
 													</div>
