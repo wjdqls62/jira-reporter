@@ -268,7 +268,7 @@ export default function ReportContents() {
 							icon={<LuFileJson />}
 							onClick={handleJsonDownload}
 						/>
-						<Button label={'LLM 분석'} icon={<LuFileJson />} disabled={true} />
+						{/*<Button label={'LLM 분석'} icon={<LuFileJson />} disabled={true} />*/}
 						<Button
 							label={'새로고침'}
 							icon={<HiOutlineRefresh size={14} />}
