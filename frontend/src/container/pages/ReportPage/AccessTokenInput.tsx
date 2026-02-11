@@ -155,7 +155,7 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 							/>
 						</div>
 						<div className={styles.labelWithField}>
-							<span className={styles.labelText}>
+							<label className={styles.labelText}>
 								<Controller
 									render={({ field }) => (
 										<input
@@ -168,7 +168,7 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 									name={'isCheckList'}
 								/>
 								확인 이슈
-							</span>
+							</label>
 							<Controller
 								render={({ field }) => (
 									<textarea
