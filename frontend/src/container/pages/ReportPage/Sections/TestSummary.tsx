@@ -1,6 +1,9 @@
 import React from 'react';
-import { Section } from '@/container/components/UiTools/UiTools.tsx';
+import { NavLink } from 'react-router-dom';
+
+import { JIRA_BASE_BROWSE_URL } from '@/constants/Common.ts';
 import { defectPriority } from '@/constants/Issue.ts';
+import { Section } from '@/container/components/UiTools/UiTools.tsx';
 
 import type { ISubIssue } from '@/api/models/Epic.ts';
 
@@ -53,6 +56,22 @@ export default function TestSummary({
 	defectActionRates,
 	improvementsActionRates,
 }: TestSummaryProps) {
+	const ReopenIssueLink = ({ issueKeys }: { issueKeys: string[] }) => {
+		return issueKeys.map((key, index) => {
+			return (
+				<>
+					<NavLink
+						key={key}
+						to={`${JIRA_BASE_BROWSE_URL}${key}`}
+						target={'_blank'}>
+						{key}
+					</NavLink>
+					{issueKeys.length - 1 === index ? '' : ', '}
+				</>
+			);
+		});
+	};
+
 	return (
 		<Section title={'1. 테스트 요약'}>
 			<div>
@@ -119,7 +138,7 @@ export default function TestSummary({
 												return (
 													<>
 														<div>{`재발생: ${reopenCount}건`}</div>
-														<div>{`(${reopenIssueKeys.join(', ')})`}</div>
+														<ReopenIssueLink issueKeys={reopenIssueKeys} />
 													</>
 												);
 											})()}
@@ -165,7 +184,7 @@ export default function TestSummary({
 												return (
 													<>
 														<div>{`재발생: ${reopenCount}건`}</div>
-														<div>{`(${reopenIssueKeys.join(', ')})`}</div>
+														<ReopenIssueLink issueKeys={reopenIssueKeys} />
 													</>
 												);
 											})()}
@@ -216,7 +235,9 @@ export default function TestSummary({
 																	<>
 																		<div>{`재발생: ${reopenCount}건`}</div>
 																		<div>
-																			{`(${reopenIssueKeys.join(', ')})`}
+																			<ReopenIssueLink
+																				issueKeys={reopenIssueKeys}
+																			/>
 																		</div>
 																	</>
 																);
@@ -279,9 +300,9 @@ export default function TestSummary({
 															<>
 																<div>{`재발생: ${reopenCount}건`}</div>
 																<div>
-																	{`(${Array.from(reopenIssueKeys)
-																		.map((issue) => issue)
-																		.join(', ')})`}
+																	<ReopenIssueLink
+																		issueKeys={Array.from(reopenIssueKeys)}
+																	/>
 																</div>
 															</>
 														);
@@ -331,9 +352,9 @@ export default function TestSummary({
 												<>
 													<div>재발생: {`${reopenCount.length}개`}</div>
 													<div>
-														{`(${Array.from(reopenImprovementsKeys)
-															.map((issue) => issue)
-															.join(', ')})`}
+														<ReopenIssueLink
+															issueKeys={Array.from(reopenImprovementsKeys)}
+														/>
 													</div>
 												</>
 											);
