@@ -21,16 +21,17 @@ import {
 	YAxis,
 } from 'recharts';
 
+import { defectPriority } from '@/constants/Issue.ts';
+
 import styles from './CustomChart.module.scss';
 import { customPieChartLabel } from './CustomChartUtils.tsx';
 import { CustomLegend } from './CustomLegend.tsx';
-import { defectPriority } from '../../../constants/Issue.ts';
 import useChart, {
 	type initialChartStateValues,
 } from '../../hooks/useChart.ts';
 import { Flex } from '../UiTools/UiTools.tsx';
 
-import type { ISubIssue } from '../../../api/models/Epic.ts';
+import type { ISubIssue } from '@/api/models/Epic.ts';
 
 type ChartType =
 	| 'defectReasonChart'
@@ -232,7 +233,15 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 			);
 		},
 		fixedChart: () => {
-			const dataKeys = ['충돌', '장애', '중요함', '보통','사소함', '개선', '새 기능'];
+			const dataKeys = [
+				'충돌',
+				'장애',
+				'중요함',
+				'보통',
+				'사소함',
+				'개선',
+				'새 기능',
+			];
 			const filteredData = Object.entries(dataKeys).reduce(
 				(acc, [key, value]) => {
 					if (value === '개선' || value === '새 기능') {

@@ -40,10 +40,13 @@ export default function ReportPage() {
 		});
 	};
 
-	const handleSubmitToken = (token, issueKey, issueType, checkListKey) => {
-		setJira({
-			token: token,
-		});
+	const handleSubmitToken = (
+		token: string,
+		issueKey: string | string[],
+		issueType: 'epic' | 'issues',
+		checkListKey: string[] | null
+	) => {
+		setJira({ token });
 		setIssue({
 			type: issueType,
 			key: issueKey,
@@ -51,37 +54,16 @@ export default function ReportPage() {
 		});
 		navigate(issueType === 'epic' ? '/report/epic' : '/report/issues', {
 			state: {
-				issueType: issueType,
-				issueKey: issueKey,
-				checkListKey: checkListKey,
+				issueType,
+				issueKey,
+				checkListKey,
 			},
 		});
 	};
 
 	if (!jira.token || !issue.type || !issue.key) {
 		return (
-			<AccessTokenInput
-				onSubmitToken={(token, issueKey, issueType, checkListKey) => {
-					const checkListKeys =
-						checkListKey
-							?.split(',')
-							.map((key) => key.trim())
-							.filter((key) => key !== '') || null;
-
-					if (issueType === 'epic') {
-						handleSubmitToken(token, issueKey, issueType, checkListKeys);
-					} else if (issueType === 'issues') {
-						const issueKeys = issueKey.split(',');
-
-						handleSubmitToken(
-							token,
-							issueKeys.map((key) => key.trim()),
-							issueType,
-							checkListKeys,
-						);
-					}
-				}}
-			/>
+			<AccessTokenInput onSubmitToken={handleSubmitToken} />
 		);
 	}
 

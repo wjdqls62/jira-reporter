@@ -1,6 +1,6 @@
 import axios, { type AxiosRequestConfig } from 'axios';
 
-export const baseUrl = 'http://10.52.252.135:3000/api';
+export const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
 const instance = axios.create({
 	baseURL: baseUrl,

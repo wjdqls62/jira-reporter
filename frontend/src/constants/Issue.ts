@@ -22,3 +22,5 @@ export const defectServerities = [
 ];
 
 export const defectPriority = ['장애', '충돌', '중요함', '보통', '사소함'];
+
+export const improvePriority = ['즉시', '긴급', '높음', '보통', '낮음'];

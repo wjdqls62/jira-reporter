@@ -1,10 +1,9 @@
 import useSWR from 'swr';
+import { requestApi } from '@/api/apiClient.ts';
+import { SWR_KEYS } from '@/api/swrKeys.ts';
+import { defectPriority, improvePriority } from '@/constants/Issue.ts';
 
-import { requestApi } from '../../api/apiClient.ts';
-import { SWR_KEYS } from '../../api/swrKeys.ts';
-import { defectPriority } from '../../constants/Issue.ts';
-
-import type { ISubIssue } from '../../api/models/Epic.ts';
+import type { ISubIssue } from '@/api/models/Epic.ts';
 
 interface Props {
 	issueType: 'epic' | 'issues';
@@ -118,21 +117,39 @@ export default function useJiraIssue({
 				} as ISubIssue;
 			});
 
-			const improveIssues = subIssues.filter(
+			const improveIssues: ISubIssue[] = subIssues.filter(
 				(issue: ISubIssue) =>
 					issue.issueType === '개선' || issue.issueType === '새 기능',
 			);
+			const sortedImproveIssues = improvePriority.flatMap((issue) => {
+				const filteredIssue = improveIssues.filter(
+					(ds) => ds.priority === issue,
+				);
+				const completedIssues = filteredIssue.filter(
+					(ds) => ds.status === '해결함' || ds.status === '닫힘',
+				);
+				const inProgressIssues = filteredIssue.filter(
+					(ds) =>
+						ds.status === '진행' ||
+						ds.status === '' ||
+						ds.status === '열림' ||
+						ds.status === '보류 중' ||
+						ds.status === '피드백',
+				);
+				return [...inProgressIssues, ...completedIssues];
+			});
+
 			const defectsIssues = subIssues
 				.filter((issue: ISubIssue) => issue.issueType === '결함')
 				.filter((issue: ISubIssue) =>
 					issue.causeOfDetect.every((item) => !excludeIssue.includes(item)),
 				);
+
 			const excludeIssues = subIssues
 				.filter((issue: ISubIssue) => issue.issueType === '결함')
 				.filter((issue: ISubIssue) =>
 					issue.causeOfDetect.some((item) => excludeIssue.includes(item)),
 				);
-			console.log(`excludeIssue`, excludeIssues);
 
 			// 정렬
 			//TODO 정렬 코드 개선 필요
@@ -155,18 +172,17 @@ export default function useJiraIssue({
 				return [...inProgressIssues, ...completedIssues];
 			});
 			return {
-				improvements: improveIssues,
+				improvements: sortedImproveIssues,
 				defects: sortedDefectsIssues,
 				excludeDefects: excludeIssues,
 				checkList: checkListIssues,
 			};
 		},
 		{
-			suspense: true,
-			revalidateOnMount: true, // 마운트 시 무조건 새 요청
-			dedupingInterval: 0, // 중복 요청 방지 시간 0
-			revalidateIfStale: true, // 캐시가 stale이면 즉시 요청
-			revalidateOnFocus: false, // 포커스 이동 시 재요청 X (원하면 true)
+			revalidateOnMount: true,
+			dedupingInterval: 2000, // 2초간 중복 요청 방지
+			revalidateIfStale: true,
+			revalidateOnFocus: false,
 		},
 	);
 
