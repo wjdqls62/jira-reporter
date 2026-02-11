@@ -253,7 +253,7 @@ export default function ReportContents() {
 		}
 	}, [epicData]);
 
-	if (isLoading) {
+	if (isLoading || isValidating) {
 		return <Loading />;
 	}
 
