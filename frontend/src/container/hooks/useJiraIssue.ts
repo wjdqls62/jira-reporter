@@ -1,10 +1,9 @@
 import useSWR from 'swr';
+import { requestApi } from '@/api/apiClient.ts';
+import { SWR_KEYS } from '@/api/swrKeys.ts';
+import { defectPriority, improvePriority } from '@/constants/Issue.ts';
 
-import { requestApi } from '../../api/apiClient.ts';
-import { SWR_KEYS } from '../../api/swrKeys.ts';
-import { defectPriority } from '../../constants/Issue.ts';
-
-import type { ISubIssue } from '../../api/models/Epic.ts';
+import type { ISubIssue } from '@/api/models/Epic.ts';
 
 interface Props {
 	issueType: 'epic' | 'issues';
@@ -118,15 +117,34 @@ export default function useJiraIssue({
 				} as ISubIssue;
 			});
 
-			const improveIssues = subIssues.filter(
+			const improveIssues: ISubIssue[] = subIssues.filter(
 				(issue: ISubIssue) =>
 					issue.issueType === '개선' || issue.issueType === '새 기능',
 			);
+			const sortedImproveIssues = improvePriority.flatMap((issue) => {
+				const filteredIssue = improveIssues.filter(
+					(ds) => ds.priority === issue,
+				);
+				const completedIssues = filteredIssue.filter(
+					(ds) => ds.status === '해결함' || ds.status === '닫힘',
+				);
+				const inProgressIssues = filteredIssue.filter(
+					(ds) =>
+						ds.status === '진행' ||
+						ds.status === '' ||
+						ds.status === '열림' ||
+						ds.status === '보류 중' ||
+						ds.status === '피드백',
+				);
+				return [...inProgressIssues, ...completedIssues];
+			});
+
 			const defectsIssues = subIssues
 				.filter((issue: ISubIssue) => issue.issueType === '결함')
 				.filter((issue: ISubIssue) =>
 					issue.causeOfDetect.every((item) => !excludeIssue.includes(item)),
 				);
+
 			const excludeIssues = subIssues
 				.filter((issue: ISubIssue) => issue.issueType === '결함')
 				.filter((issue: ISubIssue) =>
@@ -154,7 +172,7 @@ export default function useJiraIssue({
 				return [...inProgressIssues, ...completedIssues];
 			});
 			return {
-				improvements: improveIssues,
+				improvements: sortedImproveIssues,
 				defects: sortedDefectsIssues,
 				excludeDefects: excludeIssues,
 				checkList: checkListIssues,
