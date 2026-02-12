@@ -60,7 +60,7 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 				accessToken: formData.accessToken,
 				issueKey: formData.issueKey,
 				issueType: issueType,
-				checkListKey: formData.checkListKey,
+				checkListKey: formData.isCheckList ? formData.checkListKey : '',
 			},
 			onSubmitToken,
 		);

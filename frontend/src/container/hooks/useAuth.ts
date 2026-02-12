@@ -10,7 +10,7 @@ interface AuthFormData {
 	accessToken: string;
 	issueKey: string;
 	issueType: 'epic' | 'issues';
-	checkListKey: string;
+	checkListKey: string | null;
 }
 
 interface UseAuthReturn {
