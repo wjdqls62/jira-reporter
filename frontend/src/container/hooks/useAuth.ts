@@ -114,7 +114,11 @@ export const useAuth = (): UseAuthReturn => {
 			// 에러 처리
 			const errorMessage =
 				error.response?.data || error.message || '인증 중 오류가 발생했습니다.';
-			alert(errorMessage);
+			enqueueSnackbar(errorMessage.error, {
+				variant: 'error',
+				autoHideDuration: 1500,
+				anchorOrigin: { vertical: 'bottom', horizontal: 'center' },
+			});
 		} finally {
 			setIsLoading(false);
 		}

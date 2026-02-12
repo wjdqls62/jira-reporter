@@ -288,7 +288,7 @@ app.post('/api/auth/test', async (req, res) => {
     console.error('에러 스택:', error.stack);
     res.status(401).json({
       success: false,
-      error: '인증에 실패했습니다. username과 password를 확인해주세요.',
+      error: '인증에 실패했습니다. 이메일 또는 API Token을 확인하세요.',
       debug: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
