@@ -22,6 +22,7 @@ export default function useJiraIssue({
 		isLoading,
 		isValidating,
 		mutate,
+		error,
 	} = useSWR<any, Error>(
 		issueType === 'epic'
 			? SWR_KEYS.inquiryEpicIssue(issueKey as string)
@@ -74,7 +75,7 @@ export default function useJiraIssue({
 			if (checkListKey && checkListKey?.length !== checkListIssues?.length) {
 				enqueueSnackbar('확인 이슈 요청 갯수와 서버의 응답 갯수가 틀립니다.', {
 					variant: 'warning',
-					autoHideDuration: 3000,
+					autoHideDuration: 1500,
 					preventDuplicate: true,
 					anchorOrigin: { vertical: 'bottom', horizontal: 'center' },
 				});
@@ -196,5 +197,5 @@ export default function useJiraIssue({
 		},
 	);
 
-	return { epicData, isLoading, mutate, isValidating };
+	return { epicData, isLoading, mutate, isValidating, error };
 }

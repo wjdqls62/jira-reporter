@@ -45,7 +45,7 @@ const defaultDataValues = {
 
 export default function ReportContents() {
 	const { state } = useLocation();
-	const { epicData, mutate, isValidating, isLoading } = useJiraIssue({
+	const { epicData, mutate, isValidating, isLoading, error } = useJiraIssue({
 		issueKey: state.issueKey as string | string[],
 		issueType: state.issueType as 'epic' | 'issues',
 		checkListKey: state?.checkListKey || null,
@@ -252,6 +252,12 @@ export default function ReportContents() {
 			});
 		}
 	}, [epicData]);
+
+	useEffect(() => {
+		if (error?.response?.status === 500) {
+			throw error;
+		}
+	}, [error]);
 
 	if (isLoading || isValidating) {
 		return <Loading />;
