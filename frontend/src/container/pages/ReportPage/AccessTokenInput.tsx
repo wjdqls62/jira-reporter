@@ -9,6 +9,7 @@ import RadioButton, {
 } from '../../components/UiTools/RadioButton/RadioButton.tsx';
 import TextField from '../../components/UiTools/TextField/TextField.tsx';
 import { HelperText } from '../../components/UiTools/UiTools.tsx';
+import { TbReport } from 'react-icons/tb';
 
 interface Props {
 	onSubmitToken: (
@@ -118,6 +119,9 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 				<div className={styles.tokenLayout}>
 					<div className={styles.inputContainer}>
 						<div className={styles.title}>
+							<div>
+								<TbReport size={24} />
+							</div>
 							<h3>Jira 이슈 보고서 생성</h3>
 						</div>
 						<div className={styles.labelWithField}>

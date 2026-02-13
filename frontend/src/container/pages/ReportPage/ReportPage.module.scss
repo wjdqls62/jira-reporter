@@ -23,6 +23,12 @@
     .title {
       display: flex;
       justify-content: center;
+      flex-direction: row;
+      gap: 10px;
+
+      div:nth-child(1) {
+        align-self: center;
+      }
     }
 
     .labelWithField {
