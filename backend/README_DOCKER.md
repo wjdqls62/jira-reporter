@@ -11,6 +11,11 @@
 프로젝트의 `backend` 디렉터리에서 다음 명령을 실행합니다.
 
 ```bash
+git pull origin main
+```
+
+
+```bash
 # backend 디렉터리에서 실행
 docker build -t jira-report-backend:latest .
 ```
