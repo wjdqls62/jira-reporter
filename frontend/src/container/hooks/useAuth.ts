@@ -10,7 +10,7 @@ interface AuthFormData {
 	accessToken: string;
 	issueKey: string;
 	issueType: 'epic' | 'issues';
-	checkListKey: string;
+	checkListKey: string | null;
 }
 
 interface UseAuthReturn {
@@ -20,8 +20,8 @@ interface UseAuthReturn {
 			token: string,
 			issueKey: string | string[],
 			issueType: 'epic' | 'issues',
-			checkListKey: string[] | null
-		) => void
+			checkListKey: string[] | null,
+		) => void,
 	) => Promise<void>;
 	isLoading: boolean;
 }
@@ -31,14 +31,17 @@ export const useAuth = (): UseAuthReturn => {
 
 	const parseCheckListKeys = (checkListKey: string): string[] | null => {
 		if (!checkListKey || checkListKey.trim() === '') return null;
-		
+
 		return checkListKey
 			.split(',')
 			.map((key) => key.trim())
 			.filter((key) => key !== '');
 	};
 
-	const parseIssueKeys = (issueKey: string, issueType: 'epic' | 'issues'): string | string[] => {
+	const parseIssueKeys = (
+		issueKey: string,
+		issueType: 'epic' | 'issues',
+	): string | string[] => {
 		if (issueType === 'epic') {
 			return issueKey;
 		} else {
@@ -46,7 +49,10 @@ export const useAuth = (): UseAuthReturn => {
 		}
 	};
 
-	const validateToken = async (email: string, accessToken: string): Promise<void> => {
+	const validateToken = async (
+		email: string,
+		accessToken: string,
+	): Promise<void> => {
 		const response = await axios.post(
 			`${baseUrl}${SWR_KEYS.validateToken}`,
 			{},
@@ -55,7 +61,7 @@ export const useAuth = (): UseAuthReturn => {
 					username: email,
 					password: accessToken,
 				},
-			}
+			},
 		);
 
 		const { data } = response;
@@ -70,8 +76,8 @@ export const useAuth = (): UseAuthReturn => {
 			token: string,
 			issueKey: string | string[],
 			issueType: 'epic' | 'issues',
-			checkListKey: string[] | null
-		) => void
+			checkListKey: string[] | null,
+		) => void,
 	): Promise<void> => {
 		setIsLoading(true);
 
@@ -89,17 +95,30 @@ export const useAuth = (): UseAuthReturn => {
 			// localStorage에 저장
 			localStorage.setItem('email', formData.email);
 			localStorage.setItem('jiraToken', formData.accessToken);
+			localStorage.setItem('issueKey', formData.issueKey);
+			localStorage.setItem('issueType', formData.issueType);
+			localStorage.setItem('checkListKey', formData.checkListKey);
 
 			// 데이터 파싱
 			const checkListKeys = parseCheckListKeys(formData.checkListKey);
 			const issueKeys = parseIssueKeys(formData.issueKey, formData.issueType);
 
 			// 성공 콜백 호출
-			onSuccess(formData.accessToken, issueKeys, formData.issueType, checkListKeys);
+			onSuccess(
+				formData.accessToken,
+				issueKeys,
+				formData.issueType,
+				checkListKeys,
+			);
 		} catch (error: any) {
 			// 에러 처리
-			const errorMessage = error.response?.data || error.message || '인증 중 오류가 발생했습니다.';
-			alert(errorMessage);
+			const errorMessage =
+				error.response?.data || error.message || '인증 중 오류가 발생했습니다.';
+			enqueueSnackbar(errorMessage.error, {
+				variant: 'error',
+				autoHideDuration: 1500,
+				anchorOrigin: { vertical: 'bottom', horizontal: 'center' },
+			});
 		} finally {
 			setIsLoading(false);
 		}

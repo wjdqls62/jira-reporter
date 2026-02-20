@@ -97,6 +97,7 @@ export const IssueDetails = ({
 		['defects']: '2. 주요 결함 내역',
 		['improvements']: '3. 주요 개선 내역',
 	};
+	const isEmpty = (data[type] as ISubIssue[])?.length === 0;
 
 	const DefectReason = ({ issue }: { issue: ISubIssue; index: number }) => {
 		return (
@@ -113,39 +114,49 @@ export const IssueDetails = ({
 			<table border={1}>
 				<IssueTableHeader type={type as 'defects' | 'improvements'} />
 				<tbody>
-					{(data[`${type}`] as ISubIssue[])
-						.filter((issue) =>
-							type === 'defects'
-								? issue.issueType === '결함'
-								: issue.issueType === '개선' || issue.issueType === '새 기능',
-						)
-						.map((issue, index) => {
-							return (
-								<tr key={`issue-detail-${issue.key}`}>
-									<td align={'center'}>{index + 1}</td>
-									<td>{issue.summary}</td>
-									<td align={'center'}>
-										<NavLink
-											to={`${JIRA_BASE_BROWSE_URL}${issue.key}`}
-											target={'_blank'}>
-											{issue.key}
-										</NavLink>
-									</td>
-									<td align={'center'}>
-										{type === 'defects' ? issue.defectPriority : issue.priority}
-									</td>
-									<td align={'center'}>{issue.status}</td>
-									<DefectReason issue={issue} index={index} />
-									<td align={'center'}>
-										<span
-											className={styles.clickable}
-											onClick={() => handleDeleteIssue(issue)}>
-											❌
-										</span>
-									</td>
-								</tr>
-							);
-						})}
+					{!isEmpty ? (
+						(data[`${type}`] as ISubIssue[])
+							.filter((issue) =>
+								type === 'defects'
+									? issue.issueType === '결함'
+									: issue.issueType === '개선' || issue.issueType === '새 기능',
+							)
+							.map((issue, index) => {
+								return (
+									<tr key={`issue-detail-${issue.key}`}>
+										<td align={'center'}>{index + 1}</td>
+										<td>{issue.summary}</td>
+										<td align={'center'}>
+											<NavLink
+												to={`${JIRA_BASE_BROWSE_URL}${issue.key}`}
+												target={'_blank'}>
+												{issue.key}
+											</NavLink>
+										</td>
+										<td align={'center'}>
+											{type === 'defects'
+												? issue.defectPriority
+												: issue.priority}
+										</td>
+										<td align={'center'}>{issue.status}</td>
+										<DefectReason issue={issue} index={index} />
+										<td align={'center'}>
+											<span
+												className={styles.clickable}
+												onClick={() => handleDeleteIssue(issue)}>
+												❌
+											</span>
+										</td>
+									</tr>
+								);
+							})
+					) : (
+						<tr>
+							<td colSpan={66} align={'center'}>
+								데이터가 없습니다.
+							</td>
+						</tr>
+					)}
 				</tbody>
 			</table>
 		</Section>

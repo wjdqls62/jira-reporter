@@ -9,6 +9,7 @@ import RadioButton, {
 } from '../../components/UiTools/RadioButton/RadioButton.tsx';
 import TextField from '../../components/UiTools/TextField/TextField.tsx';
 import { HelperText } from '../../components/UiTools/UiTools.tsx';
+import { TbReport } from 'react-icons/tb';
 
 interface Props {
 	onSubmitToken: (
@@ -31,10 +32,10 @@ type FormValues = {
 const defaultValues = {
 	email: localStorage.getItem('email') || '',
 	accessToken: localStorage.getItem('jiraToken') || '',
-	issueKey: '',
-	issueType: 'epic',
-	isCheckList: false,
-	checkListKey: '',
+	issueKey: localStorage.getItem('issueKey') || '',
+	issueType: localStorage.getItem('issueType') || 'epic',
+	isCheckList: !!localStorage.getItem('checkListKey'),
+	checkListKey: localStorage.getItem('checkListKey') || '',
 };
 
 export default function AccessTokenInput({ onSubmitToken }: Props) {
@@ -42,27 +43,73 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 	const methods = useForm<FormValues>({
 		defaultValues: defaultValues,
 	});
-	const { control, handleSubmit } = methods;
+	const { control, handleSubmit, setError, setValue } = methods;
 	const { email, accessToken, issueKey, checkListKey, isCheckList } = useWatch({
 		control: control,
 	});
-	
+
 	const { submitWithAuth, isLoading } = useAuth();
 
 	const handleIssueTypeChange = (value: 'epic' | 'issues') => {
+		setValue('issueType', value);
 		setIssueType(value);
 	};
 
+	const validateIssueKeyPattern = (issueKey: string) => {
+		const issueKeyRegex = /^[A-Z][A-Z0-9]*-\d+$/;
+		return issueKeyRegex.test(issueKey);
+	};
+
 	const onSubmit = async (formData: FormValues) => {
+		// 이슈 키 패턴 검증
+		if (formData.issueType === 'epic') {
+			if (!validateIssueKeyPattern(formData.issueKey)) {
+				setError('issueKey', {
+					message: `이슈키가 올바르지 않습니다. (${issueKey})`,
+				});
+				return;
+			}
+		} else if (formData.issueType === 'issues') {
+			const issueArray = formData.issueKey
+				.split(',')
+				.filter((key) => key.trim() !== '')
+				.map((key) => key.trim());
+			for (const issueKey of issueArray) {
+				if (!validateIssueKeyPattern(issueKey)) {
+					setError('issueKey', {
+						message: `이슈키가 올바르지 않습니다. (${issueKey})`,
+					});
+					return;
+				}
+			}
+		}
+
+		//확인 이슈 키 패턴 검증
+		if (formData.isCheckList && formData.checkListKey) {
+			const issueArray = formData.checkListKey
+				.split(',')
+				.filter((key) => key.trim() !== '')
+				.map((key) => key.trim());
+
+			for (const issueKey of issueArray) {
+				if (!validateIssueKeyPattern(issueKey)) {
+					setError('checkListKey', {
+						message: `이슈키가 올바르지 않습니다. (${issueKey})`,
+					});
+					return;
+				}
+			}
+		}
+
 		await submitWithAuth(
 			{
 				email: formData.email,
 				accessToken: formData.accessToken,
 				issueKey: formData.issueKey,
 				issueType: issueType,
-				checkListKey: formData.checkListKey,
+				checkListKey: formData.isCheckList ? formData.checkListKey : '',
 			},
-			onSubmitToken
+			onSubmitToken,
 		);
 	};
 
@@ -72,6 +119,9 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 				<div className={styles.tokenLayout}>
 					<div className={styles.inputContainer}>
 						<div className={styles.title}>
+							<div>
+								<TbReport size={24} />
+							</div>
 							<h3>Jira 이슈 보고서 생성</h3>
 						</div>
 						<div className={styles.labelWithField}>
@@ -128,7 +178,7 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 								onChange={(value) =>
 									handleIssueTypeChange(value as 'epic' | 'issues')
 								}
-								defaultValue={'epic'}
+								defaultValue={issueType ? issueType : 'epic'}
 							/>
 						</div>
 						<div className={styles.labelWithField}>
@@ -141,7 +191,7 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 										<textarea
 											{...field}
 											id='issueKey'
-											placeholder='Enter Issue-Key'
+											placeholder={issueTypePlaceHolderMap[issueType]}
 											onChange={(e) => field.onChange(e.target.value)}
 										/>
 										<HelperText name={'issueKey'} />
@@ -155,7 +205,7 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 							/>
 						</div>
 						<div className={styles.labelWithField}>
-							<span className={styles.labelText}>
+							<label className={styles.labelText}>
 								<Controller
 									render={({ field }) => (
 										<input
@@ -168,16 +218,19 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 									name={'isCheckList'}
 								/>
 								확인 이슈
-							</span>
+							</label>
 							<Controller
 								render={({ field }) => (
-									<textarea
-										{...field}
-										placeholder={'Enter Issue-Key'}
-										disabled={!isCheckList}
-										value={checkListKey}
-										onChange={(e) => field.onChange(e)}
-									/>
+									<>
+										<textarea
+											{...field}
+											placeholder={issueTypePlaceHolderMap['issues']}
+											disabled={!isCheckList}
+											value={checkListKey}
+											onChange={(e) => field.onChange(e)}
+										/>
+										<HelperText name={'checkListKey'} />
+									</>
 								)}
 								name={'checkListKey'}
 							/>
@@ -198,3 +251,8 @@ const issueTypeDataSet = [
 	{ label: '큰틀(Epic) 하위 이슈들', value: 'epic' },
 	{ label: '특정 결함 키들', value: 'issues' },
 ] as LabelWithValue[];
+
+const issueTypePlaceHolderMap = {
+	['epic']: `이슈 키를 입력하세요.\n(e.g. PROJECT-1000)`,
+	['issues']: `이슈 키를 입력하세요. 구분자는 쉼표(,)입니다.\n(e.g. PROJECT-1001, PROJECT-1002, PROJECT-1003)`,
+};

@@ -45,7 +45,7 @@ const defaultDataValues = {
 
 export default function ReportContents() {
 	const { state } = useLocation();
-	const { epicData, mutate, isValidating, isLoading } = useJiraIssue({
+	const { epicData, mutate, isValidating, isLoading, error } = useJiraIssue({
 		issueKey: state.issueKey as string | string[],
 		issueType: state.issueType as 'epic' | 'issues',
 		checkListKey: state?.checkListKey || null,
@@ -220,7 +220,7 @@ export default function ReportContents() {
 	const initialDate = (epicData) => {
 		if (epicData) {
 			// (부작업)개선, (부작업)결함, (부작업)새 기능에서 `(부작업)` 문자열 제거
-			const convertChecklist = epicData.checkList.map((issue) => {
+			const convertChecklist = epicData?.checkList?.map((issue) => {
 				return {
 					...issue,
 					issueType: issue.issueType.replace(/^\(부작업\)/, ''),
@@ -228,10 +228,10 @@ export default function ReportContents() {
 			});
 
 			setData({
-				defects: epicData.defects,
-				improvements: epicData.improvements,
-				excludeDefects: epicData.excludeDefects,
-				checkList: convertChecklist,
+				defects: epicData?.defects || [],
+				improvements: epicData?.improvements || [],
+				excludeDefects: epicData?.excludeDefects || [],
+				checkList: convertChecklist || [],
 			});
 		}
 	};
@@ -239,7 +239,11 @@ export default function ReportContents() {
 	useEffect(() => {
 		initialDate(epicData);
 
-		if (state.checkListKey !== null && epicData.checkList.length === 0) {
+		if (
+			epicData &&
+			state.checkListKey !== null &&
+			epicData.checkList.length === 0
+		) {
 			enqueueSnackbar('확인 이슈 검색 결과가 없습니다.', {
 				variant: 'warning',
 				autoHideDuration: 3000,
@@ -249,7 +253,13 @@ export default function ReportContents() {
 		}
 	}, [epicData]);
 
-	if (isLoading) {
+	useEffect(() => {
+		if (error?.response?.status === 500) {
+			throw error;
+		}
+	}, [error]);
+
+	if (isLoading || isValidating) {
 		return <Loading />;
 	}
 
@@ -264,7 +274,7 @@ export default function ReportContents() {
 							icon={<LuFileJson />}
 							onClick={handleJsonDownload}
 						/>
-						<Button label={'LLM 분석'} icon={<LuFileJson />} disabled={true} />
+						{/*<Button label={'LLM 분석'} icon={<LuFileJson />} disabled={true} />*/}
 						<Button
 							label={'새로고침'}
 							icon={<HiOutlineRefresh size={14} />}

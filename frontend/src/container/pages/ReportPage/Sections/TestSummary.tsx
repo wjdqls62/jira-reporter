@@ -3,9 +3,14 @@ import { NavLink } from 'react-router-dom';
 
 import { JIRA_BASE_BROWSE_URL } from '@/constants/Common.ts';
 import { defectPriority } from '@/constants/Issue.ts';
-import { Section } from '@/container/components/UiTools/UiTools.tsx';
+import { Flex, Section } from '@/container/components/UiTools/UiTools.tsx';
 
 import type { ISubIssue } from '@/api/models/Epic.ts';
+import { IoIosWarning } from 'react-icons/io';
+import { RiErrorWarningFill } from 'react-icons/ri';
+import { IoWarning } from 'react-icons/io5';
+import { FiInfo } from 'react-icons/fi';
+import Tooltip from '@mui/material/Tooltip';
 
 interface TestSummaryProps {
 	data: {
@@ -56,20 +61,72 @@ export default function TestSummary({
 	defectActionRates,
 	improvementsActionRates,
 }: TestSummaryProps) {
-	const ReopenIssueLink = ({ issueKeys }: { issueKeys: string[] }) => {
+	/**
+	 * 재발생 이슈 링크 컴포넌트
+	 *
+	 * @param issueKeys
+	 * @param prefix
+	 * @constructor
+	 */
+	const ReopenIssueLink = ({
+		issueKeys,
+		prefix,
+	}: {
+		issueKeys: string[];
+		prefix?: string;
+	}) => {
 		return issueKeys.map((key, index) => {
 			return (
-				<>
-					<NavLink
-						key={key}
-						to={`${JIRA_BASE_BROWSE_URL}${key}`}
-						target={'_blank'}>
+				<React.Fragment key={`${prefix ? prefix : ''}-${key}`}>
+					<NavLink to={`${JIRA_BASE_BROWSE_URL}${key}`} target={'_blank'}>
 						{key}
 					</NavLink>
 					{issueKeys.length - 1 === index ? '' : ', '}
-				</>
+				</React.Fragment>
 			);
 		});
+	};
+
+	/**
+	 * localStorage에 저장된 checkListKey를 정리하여 반환합니다.
+	 * (공백 문자 및 빈 배열)
+	 *
+	 * @returns {string[]} 정리된 checkListKey 배열
+	 */
+	const getCleanCheckListKeys = () => {
+		const checkListKey = localStorage.getItem('checkListKey');
+		if (!checkListKey) {
+			return [];
+		}
+
+		return checkListKey
+			.split(',')
+			.map((key) => key.trim())
+			.filter((key) => key.length > 0);
+	};
+
+	/**
+	 * 로그인시 확인 이슈 갯수와 서버 응답으로 받은 확인 이슈의 갯수가 다를 경우 툴팁 렌더링
+	 *
+	 * @constructor
+	 */
+	const CheckListDiffWarn = () => {
+		if (hasCheckListIssue) {
+			const requestCount = getCleanCheckListKeys().length;
+
+			if (requestCount !== data.checkList.length) {
+				return (
+					hasCheckListIssue && (
+						<Tooltip
+							title={'확인 이슈 요청 갯수와 서버의 응답 갯수가 틀립니다.'}>
+							<div style={{ display: 'inline-flex', cursor: 'pointer' }}>
+								<IoWarning size={18} color={'red'} />
+							</div>
+						</Tooltip>
+					)
+				);
+			}
+		}
 	};
 
 	return (
@@ -106,7 +163,10 @@ export default function TestSummary({
 											if (hasReopenIssue.checkListWorks) rowCount++; // 작업,부작업 재발생
 											return rowCount;
 										})()}>
-										확인 대상
+										<Flex gap={6} alignItems={'center'}>
+											<span>확인 대상</span>
+											<CheckListDiffWarn />
+										</Flex>
 									</td>
 									<td rowSpan={hasReopenIssue.checkListDefects ? 2 : 1}>
 										결함 조치율
@@ -138,7 +198,10 @@ export default function TestSummary({
 												return (
 													<>
 														<div>{`재발생: ${reopenCount}건`}</div>
-														<ReopenIssueLink issueKeys={reopenIssueKeys} />
+														<ReopenIssueLink
+															prefix={`summary-reopen-checkListDefects`}
+															issueKeys={reopenIssueKeys}
+														/>
 													</>
 												);
 											})()}
@@ -184,7 +247,10 @@ export default function TestSummary({
 												return (
 													<>
 														<div>{`재발생: ${reopenCount}건`}</div>
-														<ReopenIssueLink issueKeys={reopenIssueKeys} />
+														<ReopenIssueLink
+															prefix={`summary-reopen-checkListImprovements`}
+															issueKeys={reopenIssueKeys}
+														/>
 													</>
 												);
 											})()}
@@ -236,6 +302,7 @@ export default function TestSummary({
 																		<div>{`재발생: ${reopenCount}건`}</div>
 																		<div>
 																			<ReopenIssueLink
+																				prefix={`summary-reopen-checkListWorks`}
 																				issueKeys={reopenIssueKeys}
 																			/>
 																		</div>
@@ -301,6 +368,7 @@ export default function TestSummary({
 																<div>{`재발생: ${reopenCount}건`}</div>
 																<div>
 																	<ReopenIssueLink
+																		prefix={`issueTable-reopen-defects`}
 																		issueKeys={Array.from(reopenIssueKeys)}
 																	/>
 																</div>
@@ -353,6 +421,7 @@ export default function TestSummary({
 													<div>재발생: {`${reopenCount.length}개`}</div>
 													<div>
 														<ReopenIssueLink
+															prefix={`issueTable-reopen-improvements`}
 															issueKeys={Array.from(reopenImprovementsKeys)}
 														/>
 													</div>
