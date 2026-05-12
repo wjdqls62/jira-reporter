@@ -2,9 +2,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { enqueueSnackbar } from 'notistack';
-import { HiOutlineRefresh } from 'react-icons/hi';
-import { LuFileJson } from 'react-icons/lu';
-import { MdLogout } from 'react-icons/md';
 
 import styles from './ReportPage.module.scss';
 import { ISubIssue } from '@/lib/api/models/Epic';
@@ -24,9 +21,9 @@ import {
 import Loading from '@/components/container/components/UiTools/Loading';
 import Divider from '@/components/container/components/UiTools/Divider';
 import Header from '@/components/container/components/Header/Header';
-import Button from '@/components/container/components/UiTools/Button/Button';
 import useJiraIssue from '@/components/container/hooks/useJiraIssue';
-import { Select } from '@radix-ui/themes';
+import { Button, Select } from '@radix-ui/themes';
+import { Spinner, Text } from '@radix-ui/themes/dist/esm';
 
 export interface DataProps {
 	defects: ISubIssue[];
@@ -291,20 +288,35 @@ export default function ReportContents({
 				<Header>
 					<>
 						<Button
-							label={'JSON 다운로드'}
-							icon={<LuFileJson />}
+							color='gray'
+							variant='solid'
+							style={{ cursor: 'pointer' }}
 							onClick={handleJsonDownload}
-						/>
+							highContrast>
+							<Text as={'span'} size={'1'}>
+								JSON 다운로드
+							</Text>
+						</Button>
 						<Button
-							label={'새로고침'}
-							icon={<HiOutlineRefresh size={14} />}
+							color='gray'
+							variant='solid'
+							style={{ cursor: 'pointer' }}
 							onClick={() => handleRefresh()}
-						/>
+							highContrast>
+							<Text as={'span'} size={'1'}>
+								JSON 새로고침
+							</Text>
+						</Button>
 						<Button
-							label={'로그아웃'}
-							icon={<MdLogout size={14} />}
+							color='gray'
+							variant='solid'
+							style={{ cursor: 'pointer' }}
 							onClick={() => handleGoHome()}
-						/>
+							highContrast>
+							<Text as={'span'} size={'1'}>
+								로그아웃
+							</Text>
+						</Button>
 					</>
 				</Header>
 				<Divider align={'horizontal'} color={'#a1a1a1'} />

@@ -277,7 +277,11 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 								name={'checkListKey'}
 							/>
 						</div>
-						<Button color='gray' variant='solid' highContrast>
+						<Button
+							color='gray'
+							variant='solid'
+							style={{ cursor: 'pointer' }}
+							highContrast>
 							<Spinner loading={isLoading} />
 							<Text as={'span'} size={'1'}>
 								조회
