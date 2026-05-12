@@ -6,28 +6,38 @@ import styles from './CustomChart.module.scss';
 
 import type { LegendProps } from 'recharts';
 
+interface LegendPayload {
+	value?: string;
+	payload?: {
+		stackId?: string;
+		legendType?: 'rect' | 'line';
+		fill?: string;
+		stroke?: string;
+	};
+}
+
 interface CustomLegendProps extends LegendProps {
 	chartType: 'fixedChart' | 'defectReasonPieChart' | 'defectReasonChart';
+	payload?: readonly LegendPayload[];
 }
 
 interface LegendIconProps {
 	width: number;
 	height: number;
-	type: 'rect' | 'line';
-	color: string;
+	type?: 'rect' | 'line';
+	color?: string;
 }
 
 export const CustomLegend = (props: CustomLegendProps) => {
 	return (
 		<div className={styles.customLegend}>
-			{props.payload.map((legend, index) => {
+			{props.payload?.map((legend, index) => {
 				const getLabel = () => {
 					if (props.chartType === 'fixedChart') {
-						return legendLabelMap['fixedChart'][
-							legend.payload?.stackId || 'fixedRate'
-						];
+						const stackId = (legend.payload?.stackId || 'fixedRate') as keyof typeof legendLabelMap['fixedChart'];
+						return legendLabelMap['fixedChart'][stackId];
 					} else if (props.chartType === 'defectReasonChart') {
-						return legend.value.split('.')[1];
+						return legend.value?.split('.')[1];
 					}
 				};
 
@@ -38,11 +48,11 @@ export const CustomLegend = (props: CustomLegendProps) => {
 						<LegendIcon
 							width={14}
 							height={10}
-							type={legend.payload.legendType}
+							type={legend.payload?.legendType}
 							color={
-								legend.payload.legendType === 'rect'
-									? legend.payload.fill
-									: legend.payload.stroke
+								legend.payload?.legendType === 'rect'
+									? legend.payload?.fill
+									: legend.payload?.stroke
 							}
 						/>
 						<div>{getLabel()}</div>
@@ -57,7 +67,7 @@ const LegendIcon = ({ width = 14, height = 10, ...props }: LegendIconProps) => {
 	const iconStyle = {
 		width: `${width}px`,
 		height: props.type === 'rect' ? `${height}px` : `3px`,
-		backgroundColor: props.color,
+		backgroundColor: props.color || '#000',
 	} as CSSProperties;
 	return <div style={{ ...iconStyle }} />;
 };

@@ -1,4 +1,4 @@
-import type React, { CSSProperties } from 'react';
+import { CSSProperties } from 'react';
 
 interface ChipTextFieldProps {
 	value: string;
@@ -30,4 +30,3 @@ const chipStyles = {
 	borderRadius: '8px',
 	padding: '4px',
 } as CSSProperties;
-

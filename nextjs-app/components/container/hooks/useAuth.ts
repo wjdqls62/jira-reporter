@@ -97,10 +97,10 @@ export const useAuth = (): UseAuthReturn => {
 			localStorage.setItem('jiraToken', formData.accessToken);
 			localStorage.setItem('issueKey', formData.issueKey);
 			localStorage.setItem('issueType', formData.issueType);
-			localStorage.setItem('checkListKey', formData.checkListKey);
+			localStorage.setItem('checkListKey', formData?.checkListKey || '');
 
 			// 데이터 파싱
-			const checkListKeys = parseCheckListKeys(formData.checkListKey);
+			const checkListKeys = parseCheckListKeys(formData?.checkListKey || '');
 			const issueKeys = parseIssueKeys(formData.issueKey, formData.issueType);
 
 			// 성공 콜백 호출

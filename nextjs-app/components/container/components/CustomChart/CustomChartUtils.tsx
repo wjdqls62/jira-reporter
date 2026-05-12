@@ -1,15 +1,23 @@
 'use client';
 
-import type { PieLabelProps } from 'recharts/types/polar/Pie';
+interface CustomPieLabelProps {
+	cx?: number;
+	cy?: number;
+	midAngle?: number;
+	outerRadius?: number;
+	name?: string;
+	value?: number;
+	[key: string]: any;
+}
 
 export const customPieChartLabel = ({
-	cx,
-	cy,
-	midAngle,
-	outerRadius,
+	cx = 0,
+	cy = 0,
+	midAngle = 0,
+	outerRadius = 0,
 	name,
 	value,
-}: PieLabelProps) => {
+}: CustomPieLabelProps) => {
 	// 라벨을 원 바깥에 위치시키기 위한 거리 계산
 	const RADIAN = Math.PI / 180;
 	const radius = outerRadius + 30; // 원 바깥으로 20px 떨어진 위치

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { JSX, useState } from 'react';
 import { Modal } from '@mui/material';
 import { SketchPicker } from 'react-color';
 import {
@@ -22,15 +22,12 @@ import {
 	XAxis,
 	YAxis,
 } from 'recharts';
-
 import { defectPriority } from '@/lib/constants/Issue';
-
 import styles from './CustomChart.module.scss';
 import { customPieChartLabel } from './CustomChartUtils';
 import { CustomLegend } from './CustomLegend';
 import useChart, { type initialChartStateValues } from '../../hooks/useChart';
 import { Flex } from '../UiTools/UiTools';
-
 import type { ISubIssue } from '@/lib/api/models/Epic';
 
 type ChartType =
@@ -47,6 +44,7 @@ interface ColorPickerProps {
 	onCommit: (color: string) => void;
 	onChangeBarSize: (size: number) => void;
 	onChangeRadarOpacity?: (value: number) => void;
+	onChangeRadarColorSelectMode?: (color: string) => void;
 	onClose: () => void;
 	currentBarSize: number;
 	chartState: typeof initialChartStateValues;
@@ -104,7 +102,7 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 					changeRadarOpacity(value);
 				}}
 				onChangeRadarColorSelectMode={(color) =>
-					changeRadarSelectColorMode(color)
+					changeRadarSelectColorMode(color as 'fill' | 'stroke')
 				}
 				chartState={chartState}
 				currentBarSize={
@@ -140,8 +138,10 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 	};
 
 	const chartRenderers: Record<
-		'defectReasonChart' | 'defectReasonPieChart' | 'fixedChart',
-		'defectReasonRadarChart',
+		| 'defectReasonChart'
+		| 'defectReasonPieChart'
+		| 'fixedChart'
+		| 'defectReasonRadarChart',
 		() => JSX.Element
 	> = {
 		defectReasonChart: () => {
@@ -260,7 +260,7 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 					}
 					return acc;
 				},
-				{},
+				{} as Record<string, ISubIssue[]>,
 			);
 			const mappedData = Object.entries(filteredData).map(([key, value]) => {
 				return {
@@ -296,7 +296,7 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 						dataKey={(obj) => {
 							return (
 								obj?.data?.filter(
-									(issue) =>
+									(issue: ISubIssue) =>
 										issue.status === '해결함' || issue.status === '닫힘',
 								)?.length || 0
 							);
@@ -316,7 +316,7 @@ export default function CustomChart({ data, dataKey, type }: ChartProps) {
 							}
 							const fixedCounts =
 								obj?.data?.filter(
-									(issue) =>
+									(issue: ISubIssue) =>
 										issue.status === '해결함' || issue.status === '닫힘',
 								) || [];
 							return (fixedCounts.length / total) * 100;
@@ -421,7 +421,10 @@ const ColorPickerModal = React.memo((props: ColorPickerProps) => {
 							step={0.1}
 							min={0.1}
 							max={1}
-							onChange={(e) => onChangeRadarOpacity(Number(e.target.value))}
+							onChange={(e) =>
+								onChangeRadarOpacity &&
+								onChangeRadarOpacity(Number(e.target.value))
+							}
 						/>
 					</label>
 				</Flex>
@@ -452,3 +455,4 @@ const ColorPickerModal = React.memo((props: ColorPickerProps) => {
 		</Modal>
 	);
 });
+ColorPickerModal.displayName = 'ColorPickerModal';
