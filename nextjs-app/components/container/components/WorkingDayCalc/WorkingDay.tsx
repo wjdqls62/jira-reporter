@@ -234,7 +234,7 @@ export function WorkingDay({ applyWorkingDay }: WorkingDayProps) {
 							gap={'24px'}
 							direction={'column'}
 							style={{
-								backgroundColor: '#f0f0f0',
+								backgroundColor: '#f0f8ff',
 								borderRadius: '8px',
 							}}>
 							<WorkingSection title={'계산 결과'} direction={'column'}>
@@ -297,17 +297,17 @@ export function WorkingDay({ applyWorkingDay }: WorkingDayProps) {
 							}}>
 							<Flex direction={'column'} gap={'2'} width={'100%'}>
 								<WorkingCategory
-									title={'전체 일수'}
+									title={'① 전체 일수'}
 									value={`${calculatedDays.totalDays}일`}
 								/>
 								<WorkingCategory
-									title={'주말 일수'}
+									title={'② 주말 일수'}
 									value={`${calculatedDays.weekendDays}일`}
 								/>
 								<WorkingCategory
 									title={
 										<Flex gap={'1'} align={'center'}>
-											<Flex>공휴일 일수</Flex>
+											<Flex>③ 공휴일 일수</Flex>
 											<Tooltip title={'공휴일이 주말인 경우는 제외합니다.'}>
 												<div
 													style={{ display: 'inline-flex', cursor: 'pointer' }}>
@@ -317,6 +317,17 @@ export function WorkingDay({ applyWorkingDay }: WorkingDayProps) {
 										</Flex>
 									}
 									value={`${calculatedDays.holidayDays}일`}
+								/>
+								<WorkingCategory
+									title={
+										<Flex gap={'1'} align={'center'}>
+											<Flex>
+												<strong>④ 워킹데이 (① - ② - ③)</strong>
+											</Flex>
+										</Flex>
+									}
+									color={'rgba(185,218,255,0.57)'}
+									value={`${calculatedDays.workingDays}일`}
 								/>
 							</Flex>
 						</WorkingSection>
@@ -356,7 +367,7 @@ export const WorkingSection = ({
 export const WorkingCategory = ({
 	title,
 	value,
-	color = '#f0f0f0',
+	color = '#F0F8FF91',
 }: {
 	title: string | React.ReactNode;
 	value: string;
