@@ -16,6 +16,7 @@ interface FlexProps {
 	height?: string;
 	children: React.ReactNode;
 	onClick?: (e: React.MouseEvent) => void;
+	style?: CSSProperties;
 }
 
 export const Flex = ({
@@ -26,6 +27,7 @@ export const Flex = ({
 	children,
 	width,
 	onClick,
+	style,
 }: FlexProps) => {
 	const propStyles = {
 		display: 'flex',
@@ -37,7 +39,7 @@ export const Flex = ({
 	} as CSSProperties;
 	return (
 		<div
-			style={{ ...propStyles, cursor: onClick && 'pointer' }}
+			style={{ ...propStyles, cursor: onClick && 'pointer', ...style }}
 			onClick={(e) => onClick && onClick(e)}>
 			{children}
 		</div>
@@ -47,7 +49,19 @@ export const Flex = ({
 export const Section = ({ title, children, onTitleClick }: SectionProps) => {
 	return (
 		<Flex flexDirection={'column'} width={'100%'}>
-			<Flex onClick={onTitleClick}>{title}</Flex>
+			<div
+				style={{
+					display: 'flex',
+					flexDirection: 'row',
+					justifyContent: 'flex-start',
+					alignItems: 'center',
+					width: '100%',
+					gap: '4px',
+					cursor: onTitleClick ? 'pointer' : undefined,
+				}}
+				onClick={onTitleClick}>
+				{title}
+			</div>
 			<Flex>{children}</Flex>
 		</Flex>
 	);
