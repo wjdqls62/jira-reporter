@@ -22,14 +22,21 @@ import Loading from '@/components/container/components/UiTools/Loading';
 import Divider from '@/components/container/components/UiTools/Divider';
 import Header from '@/components/container/components/Header/Header';
 import useJiraIssue from '@/components/container/hooks/useJiraIssue';
-import { Button, Select } from '@radix-ui/themes';
-import { Spinner, Text } from '@radix-ui/themes/dist/esm';
+import { Button, Select, Text } from '@radix-ui/themes';
+import Modal from '@/components/container/components/UiTools/Modal/Modal';
+import { WorkingDay } from '@/components/container/components/WorkingDayCalc/WorkingDay';
 
 export interface DataProps {
 	defects: ISubIssue[];
 	improvements: ISubIssue[];
 	excludeDefects: ISubIssue[];
 	checkList: ISubIssue[];
+}
+
+export interface WorkingDayProps {
+	start: Date;
+	end: Date;
+	workDay: number;
 }
 
 interface ChartTypesProps {
@@ -59,6 +66,8 @@ export default function ReportContents({
 		issueType,
 		checkListKey: checkListKey ? checkListKey.join(',') : null,
 	});
+	const [workingModal, setWorkingModal] = useState<boolean>(false);
+	const [workingDay, setWorkingDay] = useState<WorkingDayProps>(null);
 
 	const [data, setData] = useState<DataProps>(defaultDataValues);
 
@@ -175,6 +184,7 @@ export default function ReportContents({
 					priorityCount={priorityCount}
 					defectActionRates={defectActionRates}
 					improvementsActionRates={improvementsActionRates}
+					workingDay={workingDay}
 				/>
 
 				{/* 주요 결함 내역, 주요 개선 내역 */}
@@ -237,7 +247,7 @@ export default function ReportContents({
 				</Section>
 			</Flex>
 		);
-	}, [data, chartTypes]);
+	}, [data, chartTypes, workingDay]);
 
 	const initialDate = (epicData) => {
 		if (epicData) {
@@ -287,6 +297,32 @@ export default function ReportContents({
 				<Divider align={'horizontal'} color={'#a1a1a1'} />
 				<Header>
 					<>
+						<Modal
+							open={workingModal}
+							onOpenChange={setWorkingModal}
+							showActions={false}
+							disableOutsideClick={true}
+							title='워킹데이 계산'>
+							<WorkingDay
+								applyWorkingDay={(workingDay) =>
+									setWorkingDay({
+										start: workingDay.start,
+										end: workingDay.end,
+										workDay: workingDay.workDay,
+									})
+								}
+							/>
+						</Modal>
+						<Button
+							color='gray'
+							variant='solid'
+							style={{ cursor: 'pointer' }}
+							onClick={() => setWorkingModal(true)}
+							highContrast>
+							<Text as={'span'} size={'1'}>
+								워킹데이 계산
+							</Text>
+						</Button>
 						<Button
 							color='gray'
 							variant='solid'
@@ -304,7 +340,7 @@ export default function ReportContents({
 							onClick={() => handleRefresh()}
 							highContrast>
 							<Text as={'span'} size={'1'}>
-								JSON 새로고침
+								새로고침
 							</Text>
 						</Button>
 						<Button

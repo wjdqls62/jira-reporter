@@ -2,11 +2,16 @@ import React from 'react';
 
 import { JIRA_BASE_BROWSE_URL } from '@/lib/constants/Common';
 import { defectPriority } from '@/lib/constants/Issue';
-import { Flex, Section } from '@/components/container/components/UiTools/UiTools';
+import {
+	Flex,
+	Section,
+} from '@/components/container/components/UiTools/UiTools';
 
 import type { ISubIssue } from '@/lib/api/models/Epic';
 import { IoWarning } from 'react-icons/io5';
 import Tooltip from '@mui/material/Tooltip';
+import { WorkingDayProps } from '@/components/container/pages/ReportPage/ReportContents';
+import { format } from 'date-fns';
 
 interface TestSummaryProps {
 	data: {
@@ -44,6 +49,7 @@ interface TestSummaryProps {
 	priorityCount: Record<string, number>;
 	defectActionRates: string;
 	improvementsActionRates: string;
+	workingDay?: WorkingDayProps;
 }
 
 export default function TestSummary({
@@ -56,6 +62,7 @@ export default function TestSummary({
 	priorityCount,
 	defectActionRates,
 	improvementsActionRates,
+	workingDay,
 }: TestSummaryProps) {
 	/**
 	 * 재발생 이슈 링크 컴포넌트
@@ -144,8 +151,11 @@ export default function TestSummary({
 						</tr>
 						<tr>
 							<td colSpan={2}>테스트 기간</td>
-							<td />
-							<td>Working Day(n일)</td>
+							<td>
+								{workingDay &&
+									`${format(workingDay.start, 'yyyy-MM-dd')} ~ ${format(workingDay.end, 'yyyy-MM-dd')}`}
+							</td>
+							<td>{workingDay && `Working Day (${workingDay?.workDay}일)`}</td>
 						</tr>
 						{hasCheckListIssue && (
 							<>
