@@ -1,0 +1,20 @@
+.modalRoot {
+  max-width: 880px;
+  max-height: 1180px;
+
+  .title {
+    padding: 24px;
+  }
+
+  .divider {
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+    border-bottom-color: #d6d6d6;
+  }
+
+  .content {
+    width: 100%;
+    padding: 24px;
+    //overflow-y: scroll;
+  }
+}
