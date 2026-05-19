@@ -63,8 +63,6 @@ export function WorkingDay({ applyWorkingDay }: WorkingDayProps) {
 	});
 
 	const handleDateChange = (value: Value) => {
-		console.log(`changeDate`, value);
-
 		if (Array.isArray(value)) {
 			const [start, end] = value;
 			setDate({
@@ -115,8 +113,6 @@ export function WorkingDay({ applyWorkingDay }: WorkingDayProps) {
 						currentYear++;
 					}
 				}
-
-				console.log(`response data`, data);
 				const holidays = data.map((d) => {
 					const dateStr = d.locdate.toString();
 					const year = parseInt(dateStr.substring(0, 4));
