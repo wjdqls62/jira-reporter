@@ -135,7 +135,12 @@ export function WorkingDay({ applyWorkingDay }: WorkingDayProps) {
 					};
 				});
 
-				setHolyDates(holidays);
+				const holidaysInRange = holidays.filter((d) => {
+					const holidayDate = new Date(d.date);
+					return holidayDate >= date.start! && holidayDate <= date.end!;
+				});
+
+				setHolyDates(holidaysInRange);
 
 				// 계산 로직 실행
 				const totalDays = differenceInDays(date.end, date.start) + 1;
@@ -153,7 +158,7 @@ export function WorkingDay({ applyWorkingDay }: WorkingDayProps) {
 				}
 
 				// 주말이 아닌 공휴일 수 계산
-				const holidayCount = holidays.filter(
+				const holidayCount = holidaysInRange.filter(
 					(d) => !isWeekend(new Date(d.date)),
 				).length;
 
