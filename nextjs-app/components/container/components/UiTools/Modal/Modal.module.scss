@@ -1,9 +1,10 @@
 .modalRoot {
   max-width: 880px;
   max-height: 1180px;
+  padding: 0px;
 
   .title {
-    padding: 24px;
+    padding: 24px 24px 0px 24px;
   }
 
   .divider {

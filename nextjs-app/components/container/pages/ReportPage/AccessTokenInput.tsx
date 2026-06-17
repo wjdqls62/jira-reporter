@@ -124,7 +124,14 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 			{
 				email: formData.email,
 				accessToken: formData.accessToken,
-				issueKey: formData.issueKey,
+				issueKey:
+					issueType === 'epic'
+						? formData.issueKey
+						: formData.issueKey
+								.split(',')
+								.map((s) => s.trim())
+								.filter(Boolean)
+								.join(', '),
 				issueType: issueType,
 				checkListKey: formData.isCheckList ? formData.checkListKey : '',
 			},
