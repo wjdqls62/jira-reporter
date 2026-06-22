@@ -43,6 +43,10 @@ const EmptyMessage = () => {
 };
 
 export function WorkingDay({ applyWorkingDay }: WorkingDayProps) {
+	const currentYear = new Date().getFullYear();
+	const minDate = new Date(currentYear - 3, 0, 1);
+	const maxDate = new Date(currentYear + 3, 11, 31);
+
 	const [isLoading, setIsLoading] = useState(false);
 	const [date, setDate] = useState<{
 		start?: Date;
@@ -226,6 +230,8 @@ export function WorkingDay({ applyWorkingDay }: WorkingDayProps) {
 								? [date.start, date.end]
 								: date.start || null
 						}
+						minDate={minDate}
+						maxDate={maxDate}
 					/>
 				</Flex>
 				{!date.start && !date.end && <EmptyMessage />}
