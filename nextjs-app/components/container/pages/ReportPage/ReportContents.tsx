@@ -18,7 +18,7 @@ import {
 	IssueDetails,
 	ReopenDetails,
 } from './Sections/IssueDetails';
-import Loading from '@/components/container/components/UiTools/Loading';
+import ReportSkeleton from '@/components/container/components/UiTools/ReportSkeleton';
 import Divider from '@/components/container/components/UiTools/Divider';
 import Header from '@/components/container/components/Header/Header';
 import useJiraIssue from '@/components/container/hooks/useJiraIssue';
@@ -70,6 +70,7 @@ export default function ReportContents({
 	});
 	const [workingModal, setWorkingModal] = useState<boolean>(false);
 	const [workingDay, setWorkingDay] = useState<WorkingDayProps>(null);
+	const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
 	const [data, setData] = useState<DataProps>(defaultDataValues);
 
@@ -118,9 +119,11 @@ export default function ReportContents({
 	};
 
 	const handleRefresh = async () => {
+		setIsRefreshing(true);
 		await mutate().then(() => {
 			initialDate(epicData);
 		});
+		setIsRefreshing(false);
 	};
 
 	const handleGoHome = async () => {
@@ -309,8 +312,8 @@ export default function ReportContents({
 		}
 	}, [error]);
 
-	if (isLoading || isValidating) {
-		return <Loading />;
+	if (isLoading || isRefreshing) {
+		return <ReportSkeleton />;
 	}
 
 	return (
