@@ -149,7 +149,7 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 								<TbReport size={24} />
 							</div>
 							<h3>Jira 이슈 보고서 생성</h3>
-							<span className={styles.version}>{process.env.NEXT_PUBLIC_BUILD_VERSION ?? 'v-'}</span>
+							<span className={styles.version}>{process.env.NEXT_PUBLIC_BUILD_VERSION || 'v-'}</span>
 						</div>
 						<div className={styles.labelWithField}>
 							<Controller

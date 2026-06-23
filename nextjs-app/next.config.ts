@@ -1,7 +1,9 @@
 import type { NextConfig } from 'next';
 
-const buildDate = new Date();
-const buildVersion = `v${buildDate.getFullYear()}${String(buildDate.getMonth() + 1).padStart(2, '0')}${String(buildDate.getDate()).padStart(2, '0')}`;
+const now = new Date();
+const kstOffset = 9 * 60 * 60 * 1000;
+const kstDate = new Date(now.getTime() + kstOffset);
+const buildVersion = `v${kstDate.getUTCFullYear()}${String(kstDate.getUTCMonth() + 1).padStart(2, '0')}${String(kstDate.getUTCDate()).padStart(2, '0')}`;
 
 const nextConfig: NextConfig = {
 	reactCompiler: true,

@@ -13,7 +13,7 @@ export default function Header({ children }: HeaderProps) {
 		<div className={styles.headerContainer}>
 			<div className={styles.title}>
 				대시보드
-				<span className={styles.version}>{process.env.NEXT_PUBLIC_BUILD_VERSION ?? 'v-'}</span>
+				<span className={styles.version}>{process.env.NEXT_PUBLIC_BUILD_VERSION || 'v-'}</span>
 			</div>
 			<div className={styles.rightContent}>{children}</div>
 		</div>
