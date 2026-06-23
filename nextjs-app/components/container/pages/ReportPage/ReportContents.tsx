@@ -18,13 +18,15 @@ import {
 	IssueDetails,
 	ReopenDetails,
 } from './Sections/IssueDetails';
-import Loading from '@/components/container/components/UiTools/Loading';
+import ReportSkeleton from '@/components/container/components/UiTools/ReportSkeleton';
 import Divider from '@/components/container/components/UiTools/Divider';
 import Header from '@/components/container/components/Header/Header';
 import useJiraIssue from '@/components/container/hooks/useJiraIssue';
 import { Button, Select, Text } from '@radix-ui/themes';
 import Modal from '@/components/container/components/UiTools/Modal/Modal';
 import { WorkingDay } from '@/components/container/components/WorkingDayCalc/WorkingDay';
+import Tooltip from '@mui/material/Tooltip';
+import { FiInfo } from 'react-icons/fi';
 
 export interface DataProps {
 	defects: ISubIssue[];
@@ -68,6 +70,7 @@ export default function ReportContents({
 	});
 	const [workingModal, setWorkingModal] = useState<boolean>(false);
 	const [workingDay, setWorkingDay] = useState<WorkingDayProps>(null);
+	const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
 	const [data, setData] = useState<DataProps>(defaultDataValues);
 
@@ -116,9 +119,11 @@ export default function ReportContents({
 	};
 
 	const handleRefresh = async () => {
+		setIsRefreshing(true);
 		await mutate().then(() => {
 			initialDate(epicData);
 		});
+		setIsRefreshing(false);
 	};
 
 	const handleGoHome = async () => {
@@ -218,6 +223,26 @@ export default function ReportContents({
 								<Flex>
 									<Flex>
 										<span>7-1. 결함 원인별 발생 현황</span>
+										<span>
+											<Tooltip
+												title={
+													<>
+														<div>
+															결함 원인이 여러개의 경우 원인 유형별로 개별
+															카운팅됩니다.
+														</div>
+														<div>
+															차트에서 이슈 총 갯수가 더 많이 표현될 수
+															있습니다.
+														</div>
+													</>
+												}>
+												<div
+													style={{ display: 'inline-flex', cursor: 'pointer' }}>
+													<FiInfo size={18} />
+												</div>
+											</Tooltip>
+										</span>
 										<Select.Root
 											size={'1'}
 											defaultValue={'bar'}
@@ -287,8 +312,8 @@ export default function ReportContents({
 		}
 	}, [error]);
 
-	if (isLoading || isValidating) {
-		return <Loading />;
+	if (isLoading || isRefreshing) {
+		return <ReportSkeleton />;
 	}
 
 	return (

@@ -34,10 +34,8 @@ export async function GET(request: Request) {
 			});
 		}
 		const data = await response.json();
-		console.log(`data`, data);
 
 		const item: HolidayType[] | HolidayType = data.response.body.items.item;
-
 		if (Array.isArray(item)) {
 			return NextResponse.json(item);
 		} else if (item && typeof item === 'object' && item.locdate !== undefined) {

@@ -71,7 +71,11 @@ export default function useJiraIssue({
 					} as ISubIssue;
 				}) || [];
 
-			if (checkListKey && checkListKey?.length !== checkListIssues?.length) {
+			const requestedCount = checkListKey
+					?.split(',')
+					.map((k) => k.trim())
+					.filter((k) => k.length > 0).length ?? 0;
+			if (checkListKey && requestedCount !== checkListIssues?.length) {
 				enqueueSnackbar('확인 이슈 요청 갯수와 서버의 응답 갯수가 틀립니다.', {
 					variant: 'warning',
 					autoHideDuration: 1500,

@@ -43,6 +43,10 @@ const EmptyMessage = () => {
 };
 
 export function WorkingDay({ applyWorkingDay }: WorkingDayProps) {
+	const currentYear = new Date().getFullYear();
+	const minDate = new Date(currentYear - 3, 0, 1);
+	const maxDate = new Date(currentYear + 3, 11, 31);
+
 	const [isLoading, setIsLoading] = useState(false);
 	const [date, setDate] = useState<{
 		start?: Date;
@@ -63,8 +67,6 @@ export function WorkingDay({ applyWorkingDay }: WorkingDayProps) {
 	});
 
 	const handleDateChange = (value: Value) => {
-		console.log(`changeDate`, value);
-
 		if (Array.isArray(value)) {
 			const [start, end] = value;
 			setDate({
@@ -115,8 +117,6 @@ export function WorkingDay({ applyWorkingDay }: WorkingDayProps) {
 						currentYear++;
 					}
 				}
-
-				console.log(`response data`, data);
 				const holidays = data.map((d) => {
 					const dateStr = d.locdate.toString();
 					const year = parseInt(dateStr.substring(0, 4));
@@ -135,7 +135,12 @@ export function WorkingDay({ applyWorkingDay }: WorkingDayProps) {
 					};
 				});
 
-				setHolyDates(holidays);
+				const holidaysInRange = holidays.filter((d) => {
+					const holidayDate = new Date(d.date);
+					return holidayDate >= date.start! && holidayDate <= date.end!;
+				});
+
+				setHolyDates(holidaysInRange);
 
 				// 계산 로직 실행
 				const totalDays = differenceInDays(date.end, date.start) + 1;
@@ -153,7 +158,7 @@ export function WorkingDay({ applyWorkingDay }: WorkingDayProps) {
 				}
 
 				// 주말이 아닌 공휴일 수 계산
-				const holidayCount = holidays.filter(
+				const holidayCount = holidaysInRange.filter(
 					(d) => !isWeekend(new Date(d.date)),
 				).length;
 
@@ -225,6 +230,8 @@ export function WorkingDay({ applyWorkingDay }: WorkingDayProps) {
 								? [date.start, date.end]
 								: date.start || null
 						}
+						minDate={minDate}
+						maxDate={maxDate}
 					/>
 				</Flex>
 				{!date.start && !date.end && <EmptyMessage />}

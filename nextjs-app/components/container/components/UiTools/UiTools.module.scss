@@ -10,3 +10,86 @@
   align-items: center;
   z-index: 9999;
 }
+
+@keyframes shimmer {
+  0%   { background-position: -800px 0; }
+  100% { background-position: 800px 0; }
+}
+
+.skeletonBlock {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 4px;
+}
+
+.reportSkeleton {
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.skeletonHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+}
+
+.skeletonHeaderTitle {
+  width: 64px;
+  height: 20px;
+}
+
+.skeletonHeaderButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.skeletonHeaderButton {
+  width: 90px;
+  height: 24px;
+}
+
+.skeletonContentsLayout {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.skeletonInner {
+  display: flex;
+  flex-direction: column;
+  gap: 50px;
+  width: 1200px;
+}
+
+.skeletonSection {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 8px;
+}
+
+.skeletonSectionTitle {
+  height: 20px;
+  width: 180px;
+  margin-bottom: 4px;
+}
+
+.skeletonTableHeader {
+  height: 32px;
+  width: 100%;
+  border-radius: 4px;
+}
+
+.skeletonTableRow {
+  height: 36px;
+  width: 100%;
+  border-radius: 4px;
+}
+
+.skeletonChartBlock {
+  height: 300px;
+  width: 100%;
+  border-radius: 4px;
+}
