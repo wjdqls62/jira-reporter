@@ -120,9 +120,8 @@ export default function ReportContents({
 
 	const handleRefresh = async () => {
 		setIsRefreshing(true);
-		await mutate().then(() => {
-			initialDate(epicData);
-		});
+		const updatedData = await mutate();
+		initialDate(updatedData);
 		setIsRefreshing(false);
 	};
 

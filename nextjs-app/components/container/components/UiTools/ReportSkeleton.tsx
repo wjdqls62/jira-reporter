@@ -5,6 +5,7 @@ function SkeletonBlock({ className }: { className: string }) {
 }
 
 function SkeletonTableSection({ rows }: { rows: number }) {
+  if (rows <= 0) return null;
   return (
     <div className={styles.skeletonSection}>
       <SkeletonBlock className={styles.skeletonSectionTitle} />
