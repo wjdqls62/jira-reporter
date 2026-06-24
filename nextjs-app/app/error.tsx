@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button, Flex, Text } from '@radix-ui/themes';
 
 export default function Error({
@@ -10,14 +8,8 @@ export default function Error({
 	error: Error & { digest?: string };
 	reset: () => void;
 }) {
-	const router = useRouter();
-
-	useEffect(() => {
-		console.error(error);
-	}, [error]);
-
 	const handleGoToAuth = () => {
-		router.push('/auth');
+		window.location.href = '/auth';
 	};
 
 	return (

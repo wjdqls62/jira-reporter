@@ -115,13 +115,21 @@ export async function POST(request: NextRequest) {
 			stack: error.stack,
 		});
 		console.log('========== /api/issues/search 요청 실패 ==========\n');
+
+		// "JIRA API 요청 실패: {status} - {errorText}" 또는 "JIRA API 요청 실패: {status}" 패턴 파싱
+		const statusMatch = error.message?.match(/:\s*(\d{3})/);
+		const jiraStatus = statusMatch ? parseInt(statusMatch[1]) : 500;
+
+		const userMessage =
+			jiraStatus === 404
+				? '존재하지 않는 이슈 키가 포함되어 있습니다.'
+				: jiraStatus === 401
+					? '인증 정보가 올바르지 않습니다.'
+					: '이슈 조회 중 오류가 발생했습니다.';
+
 		return NextResponse.json(
-			{
-				success: false,
-				error: error.message,
-				debug: process.env.NODE_ENV === 'development' ? error.stack : undefined,
-			},
-			{ status: 400 },
+			{ success: false, error: userMessage },
+			{ status: jiraStatus },
 		);
 	}
 }

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 
-import { baseUrl } from '@/lib/apiClient';
+import { baseUrl, requestApi } from '@/lib/apiClient';
 import { SWR_KEYS } from '@/lib/api/swrKeys';
 
 interface AuthFormData {
@@ -70,6 +70,51 @@ export const useAuth = (): UseAuthReturn => {
 		}
 	};
 
+	const validateEpicPreflight = async (epicKey: string): Promise<void> => {
+		// requestApi는 4xx/5xx 시 axios가 throw → error.response.data.error에서 메시지 추출
+		const data = await requestApi<{ issues: any[] }>(
+			'GET',
+			SWR_KEYS.inquiryEpicIssue(epicKey),
+		);
+
+		if (!data || !Array.isArray((data as any).issues) || (data as any).issues.length === 0) {
+			throw new Error('조회된 이슈가 없습니다. 이슈 키를 확인하거나 다른 키를 입력해주세요.');
+		}
+	};
+
+	const validateIssuesPreflight = async (issueKeys: string[]): Promise<void> => {
+		const data = await requestApi<{ issues: any[] }>(
+			'POST',
+			SWR_KEYS.inquiryMultipleIssue(),
+			{ issueKeys },
+		);
+
+		const issues: any[] = (data as any)?.issues ?? [];
+
+		if (issues.length === 0) {
+			throw new Error('조회된 이슈가 없습니다. 이슈 키를 확인하거나 다른 키를 입력해주세요.');
+		}
+
+		// 결함 타입 검증
+		for (const issue of issues) {
+			const issueTypeName: string = issue.fields?.issuetype?.name ?? '';
+			if (issueTypeName !== '결함') {
+				throw new Error(
+					`결함 유형이 아닌 이슈 키가 포함되어 있습니다. (${issue.key}: ${issueTypeName})`,
+				);
+			}
+		}
+
+		// 누락 키 검증
+		const returnedKeys = new Set(issues.map((issue: any) => issue.key));
+		const missingKeys = issueKeys.filter((key) => !returnedKeys.has(key));
+		if (missingKeys.length > 0) {
+			throw new Error(
+				`존재하지 않는 이슈 키가 포함되어 있습니다. (${missingKeys.join(', ')})`,
+			);
+		}
+	};
+
 	const submitWithAuth = async (
 		formData: AuthFormData,
 		onSuccess: (
@@ -92,12 +137,23 @@ export const useAuth = (): UseAuthReturn => {
 				anchorOrigin: { vertical: 'bottom', horizontal: 'center' },
 			});
 
-			// localStorage에 저장
+			// localStorage에 저장 (프리플라이트에서 apiClient 인터셉터가 헤더 주입에 사용)
 			localStorage.setItem('email', formData.email);
 			localStorage.setItem('jiraToken', formData.accessToken);
 			localStorage.setItem('issueKey', formData.issueKey);
 			localStorage.setItem('issueType', formData.issueType);
 			localStorage.setItem('checkListKey', formData?.checkListKey || '');
+
+			// 프리플라이트: 이슈 존재 여부 및 유효성 검증
+			if (formData.issueType === 'epic') {
+				await validateEpicPreflight(formData.issueKey);
+			} else {
+				const issueKeyArray = formData.issueKey
+					.split(',')
+					.map((key) => key.trim())
+					.filter(Boolean);
+				await validateIssuesPreflight(issueKeyArray);
+			}
 
 			// 데이터 파싱
 			const checkListKeys = parseCheckListKeys(formData?.checkListKey || '');
@@ -110,15 +166,6 @@ export const useAuth = (): UseAuthReturn => {
 				formData.issueType,
 				checkListKeys,
 			);
-		} catch (error: any) {
-			// 에러 처리
-			const errorMessage =
-				error.response?.data || error.message || '인증 중 오류가 발생했습니다.';
-			enqueueSnackbar(errorMessage.error, {
-				variant: 'error',
-				autoHideDuration: 1500,
-				anchorOrigin: { vertical: 'bottom', horizontal: 'center' },
-			});
 		} finally {
 			setIsLoading(false);
 		}
