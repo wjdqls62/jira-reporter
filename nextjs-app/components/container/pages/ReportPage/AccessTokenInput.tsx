@@ -58,6 +58,7 @@ const getDefaultValues = () => {
 
 export default function AccessTokenInput({ onSubmitToken }: Props) {
 	const [issueType, setIssueType] = useState<'epic' | 'issues'>('epic');
+	const [asyncError, setAsyncError] = useState<Error | null>(null);
 	const methods = useForm<FormValues>({
 		defaultValues: getDefaultValues(),
 	});
@@ -68,6 +69,9 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 	const ref = useRef<HTMLFormElement>(null);
 
 	const { submitWithAuth, isLoading } = useAuth();
+
+	// asyncError가 있으면 render 시점에 throw → app/error.tsx 에러 바운더리가 catch
+	if (asyncError) throw asyncError;
 
 	const handleIssueTypeChange = (value: 'epic' | 'issues') => {
 		setValue('issueType', value);
@@ -120,23 +124,29 @@ export default function AccessTokenInput({ onSubmitToken }: Props) {
 			}
 		}
 
-		await submitWithAuth(
-			{
-				email: formData.email,
-				accessToken: formData.accessToken,
-				issueKey:
-					issueType === 'epic'
-						? formData.issueKey
-						: formData.issueKey
-								.split(',')
-								.map((s) => s.trim())
-								.filter(Boolean)
-								.join(', '),
-				issueType: issueType,
-				checkListKey: formData.isCheckList ? formData.checkListKey : '',
-			},
-			onSubmitToken,
-		);
+		try {
+			await submitWithAuth(
+				{
+					email: formData.email,
+					accessToken: formData.accessToken,
+					issueKey:
+						issueType === 'epic'
+							? formData.issueKey
+							: formData.issueKey
+									.split(',')
+									.map((s) => s.trim())
+									.filter(Boolean)
+									.join(', '),
+					issueType: issueType,
+					checkListKey: formData.isCheckList ? formData.checkListKey : '',
+				},
+				onSubmitToken,
+			);
+		} catch (error: any) {
+			const message =
+				error.response?.data?.error || error.message || '오류가 발생했습니다.';
+			setAsyncError(new Error(message));
+		}
 	};
 
 	return (
