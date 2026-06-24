@@ -29,6 +29,13 @@
       div:nth-child(1) {
         align-self: center;
       }
+
+      .version {
+        font-size: 10px;
+        color: #999999;
+        align-self: flex-end;
+        margin-left: auto;
+      }
     }
 
     .labelWithField {

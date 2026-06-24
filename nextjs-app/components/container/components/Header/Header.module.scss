@@ -7,7 +7,16 @@
   padding: 16px;
 
   .title {
+    display: flex;
+    align-items: baseline;
 
+    .version {
+      font-size: 10px;
+      color: #999999;
+      margin-left: 6px;
+      font-weight: normal;
+      align-self: flex-end;
+    }
   }
 
   .rightContent {
