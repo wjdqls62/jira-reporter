@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { Button, Flex, Text } from '@radix-ui/themes';
 
 export default function Error({
@@ -9,10 +8,6 @@ export default function Error({
 	error: Error & { digest?: string };
 	reset: () => void;
 }) {
-	useEffect(() => {
-		console.error(error);
-	}, [error]);
-
 	const handleGoToAuth = () => {
 		window.location.href = '/auth';
 	};
