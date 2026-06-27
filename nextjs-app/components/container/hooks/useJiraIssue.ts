@@ -20,7 +20,7 @@ export default function useJiraIssue({
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 	const [error, setError] = useState<Error | null>(null);
 
-	const mutate = useCallback(async () => {
+	const mutate = useCallback(async (signal?: { cancelled: boolean }) => {
 		setIsLoading(true);
 		setError(null);
 		try {
@@ -195,18 +195,23 @@ export default function useJiraIssue({
 				checkList: checkListIssues,
 			};
 
+			if (signal?.cancelled) return undefined;
 			setEpicData(result);
 			return result;
 		} catch (err) {
-			setError(err as Error);
+			if (!signal?.cancelled) setError(err as Error);
 			return undefined;
 		} finally {
-			setIsLoading(false);
+			if (!signal?.cancelled) setIsLoading(false);
 		}
 	}, [issueType, issueKey, checkListKey]);
 
 	useEffect(() => {
-		mutate();
+		const signal = { cancelled: false };
+		mutate(signal);
+		return () => {
+			signal.cancelled = true;
+		};
 	}, [mutate]);
 
 	return { epicData, isLoading, mutate, error };

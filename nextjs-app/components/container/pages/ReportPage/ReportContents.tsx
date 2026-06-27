@@ -63,7 +63,7 @@ export default function ReportContents({
 	issueKey,
 	checkListKey,
 }: ReportContentsProps) {
-	const { epicData, mutate, isValidating, isLoading, error } = useJiraIssue({
+	const { epicData, mutate, isLoading, error } = useJiraIssue({
 		issueKey,
 		issueType,
 		checkListKey: checkListKey ? checkListKey.join(',') : null,
