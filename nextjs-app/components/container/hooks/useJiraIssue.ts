@@ -1,4 +1,4 @@
-import useSWR from 'swr';
+import { useState, useCallback, useEffect } from 'react';
 import { requestApi } from '@/lib/apiClient';
 import { SWR_KEYS } from '@/lib/api/swrKeys';
 import { defectPriority, improvePriority } from '@/lib/constants/Issue';
@@ -16,17 +16,14 @@ export default function useJiraIssue({
 	issueKey,
 	checkListKey,
 }: Props) {
-	const {
-		data: epicData,
-		isLoading,
-		isValidating,
-		mutate,
-		error,
-	} = useSWR<any, Error>(
-		issueType === 'epic'
-			? SWR_KEYS.inquiryEpicIssue(issueKey as string)
-			: SWR_KEYS.inquiryMultipleIssue(),
-		async (url: string) => {
+	const [epicData, setEpicData] = useState<any>(undefined);
+	const [isLoading, setIsLoading] = useState<boolean>(true);
+	const [error, setError] = useState<Error | null>(null);
+
+	const mutate = useCallback(async (signal?: { cancelled: boolean }) => {
+		setIsLoading(true);
+		setError(null);
+		try {
 			let checkListRes;
 			if (checkListKey !== null && checkListKey !== '') {
 				checkListRes = await requestApi(
@@ -83,6 +80,11 @@ export default function useJiraIssue({
 					anchorOrigin: { vertical: 'bottom', horizontal: 'center' },
 				});
 			}
+
+			const url =
+				issueType === 'epic'
+					? SWR_KEYS.inquiryEpicIssue(issueKey as string)
+					: SWR_KEYS.inquiryMultipleIssue();
 
 			const res =
 				issueType === 'epic'
@@ -185,20 +187,32 @@ export default function useJiraIssue({
 
 				return [...inProgressIssues, ...completedIssues];
 			});
-			return {
+
+			const result = {
 				improvements: sortedImproveIssues,
 				defects: sortedDefectsIssues,
 				excludeDefects: excludeIssues,
 				checkList: checkListIssues,
 			};
-		},
-		{
-			revalidateOnMount: true,
-			dedupingInterval: 2000, // 2초간 중복 요청 방지
-			revalidateIfStale: true,
-			revalidateOnFocus: false,
-		},
-	);
 
-	return { epicData, isLoading, mutate, isValidating, error };
+			if (signal?.cancelled) return undefined;
+			setEpicData(result);
+			return result;
+		} catch (err) {
+			if (!signal?.cancelled) setError(err as Error);
+			return undefined;
+		} finally {
+			if (!signal?.cancelled) setIsLoading(false);
+		}
+	}, [issueType, issueKey, checkListKey]);
+
+	useEffect(() => {
+		const signal = { cancelled: false };
+		mutate(signal);
+		return () => {
+			signal.cancelled = true;
+		};
+	}, [mutate]);
+
+	return { epicData, isLoading, mutate, error };
 }
