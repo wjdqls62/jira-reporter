@@ -120,9 +120,7 @@ export default function ReportContents({
 
 	const handleRefresh = async () => {
 		setIsRefreshing(true);
-		const updatedData = await mutate();
-		initialDate(updatedData);
-		setIsRefreshing(false);
+		await mutate();
 	};
 
 	const handleGoHome = async () => {
@@ -294,6 +292,7 @@ export default function ReportContents({
 
 	useEffect(() => {
 		initialDate(epicData);
+		setIsRefreshing(false);
 
 		if (epicData && checkListKey !== null && epicData.checkList.length === 0) {
 			enqueueSnackbar('확인 이슈 검색 결과가 없습니다.', {
@@ -306,8 +305,30 @@ export default function ReportContents({
 	}, [epicData]);
 
 	useEffect(() => {
-		if (error?.response?.status === 500) {
+		if (!error) return;
+
+		const status = error?.response?.status;
+
+		if (status === 500) {
 			throw error;
+		} else if (status === 401) {
+			enqueueSnackbar('인증이 만료되었습니다. 다시 로그인해 주세요.', {
+				variant: 'error',
+				autoHideDuration: 2000,
+				anchorOrigin: { vertical: 'bottom', horizontal: 'center' },
+			});
+			window.location.href = '/auth';
+		} else {
+			enqueueSnackbar(
+				error?.response?.data?.message ||
+					error?.message ||
+					'데이터를 불러오는 중 오류가 발생했습니다.',
+				{
+					variant: 'error',
+					autoHideDuration: 3000,
+					anchorOrigin: { vertical: 'bottom', horizontal: 'center' },
+				},
+			);
 		}
 	}, [error]);
 
